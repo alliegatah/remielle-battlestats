@@ -63,7 +63,12 @@ pub fn main(init: Init.Minimal) void {
         else => |limit| .limited64(limit),
     };
 
-    const bind_args = .{ io, gpa, csprng, &bind_address, concurrent_sessions_limit };
+    var assets = Assets.load(io, gpa) catch |err|
+        fatal("failed to load assets: {t}", .{err});
+
+    defer assets.deinit();
+
+    const bind_args = .{ io, gpa, csprng, &assets, &bind_address, concurrent_sessions_limit };
 
     var app_future = io.concurrent(app.bind, bind_args) catch |concurrent_err| switch (concurrent_err) {
         error.ConcurrencyUnavailable => {
@@ -99,6 +104,7 @@ const net = std.Io.net;
 const exit = std.process.exit;
 
 const app = @import("app.zig");
+const Assets = @import("Assets.zig");
 
 const std = @import("std");
 const rmio = @import("rmio");

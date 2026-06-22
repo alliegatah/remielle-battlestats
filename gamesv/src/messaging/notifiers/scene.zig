@@ -1,4 +1,7 @@
+const default_interact_target_list: []const pb.InteractTarget = &.{.InteractTarget_NPC};
+
 pub fn switchGameMode(
+    assets: *const Assets,
     properties: logic.Properties.Immutable(.{
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
@@ -13,14 +16,69 @@ pub fn switchGameMode(
     const game_mode = changes.game_mode.?;
 
     switch (game_mode) {
-        .hall => |hall| notify.one(.{ .scene = .{
-            .scene_type = 1,
-            .hall_scene_data = .{
-                .section_id = @intFromEnum(hall.section_id),
-                .control_avatar_id = properties.basic_info.control_avatar.toInt(),
-                .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+        .hall => |hall| notify.one(.{
+            .scene = .{
+                .scene_type = 1,
+                .hall_scene_data = .{
+                    .section_id = @intFromEnum(hall.section_id),
+                    .control_avatar_id = properties.basic_info.control_avatar.toInt(),
+                    .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+                    .npc_list = npc_list: {
+                        const main_city = &assets.graphs.main_city;
+                        const section_index = std.mem.findScalar(
+                            u32,
+                            main_city.sections,
+                            @intFromEnum(hall.section_id),
+                        ) orelse break :npc_list .empty;
+
+                        var npc_id_list: ArrayList(u32) = .empty;
+                        var npc_list: ArrayList(pb.NpcInfo) = .empty;
+
+                        const event = &main_city.events[section_index];
+
+                        for (main_city.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
+                            .create_npc => {
+                                const create_npc = &main_city.create_npc[action.index];
+                                try npc_id_list.append(notify.allocator, create_npc.tag_id);
+
+                                try npc_list.append(notify.allocator, .{
+                                    .npc_id = create_npc.tag_id,
+                                    .is_active = true,
+                                    // TODO: add default interact
+                                });
+                            },
+                            .change_interact => {
+                                const change_interact = &main_city.change_interact[action.index];
+                                const npc_index = std.mem.findScalar(
+                                    u32,
+                                    npc_id_list.items,
+                                    change_interact.tag_id,
+                                ) orelse continue;
+
+                                try npc_list.items[npc_index].interacts_info.append(notify.allocator, .{
+                                    .key = change_interact.interact_id,
+                                    .value = .{
+                                        .tag_id = @intCast(change_interact.tag_id),
+                                        .interact_target_list = .fromOwnedSlice(
+                                            // constCast: this list won't be modified.
+                                            @constCast(default_interact_target_list),
+                                        ),
+                                        .name = "A",
+                                        .scale_x = 1,
+                                        .scale_y = 1,
+                                        .scale_z = 1,
+                                        .scale_w = 1,
+                                        .scale_r = 1,
+                                    },
+                                });
+                            },
+                        };
+
+                        break :npc_list npc_list;
+                    },
+                },
             },
-        } }),
+        }),
         .training => |training| notify.one(.{
             .scene = .{
                 .scene_type = 3, // training is implemented in terms of FightScene

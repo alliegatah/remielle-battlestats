@@ -4,6 +4,7 @@ pub fn bind(
     io: Io,
     gpa: Allocator,
     csprng: Random,
+    assets: *const Assets,
     udp_address: *const net.IpAddress,
     concurrent_session_limit: Io.Limit,
 ) Io.Cancelable!void {
@@ -35,7 +36,7 @@ pub fn bind(
     var per_message_arena: heap.ArenaAllocator = .init(gpa);
     defer per_message_arena.deinit();
 
-    var server: Server = .init(&per_message_arena, csprng, concurrent_session_limit);
+    var server: Server = .init(&per_message_arena, csprng, assets, concurrent_session_limit);
     var buffer: [kcp.mtu]u8 = undefined;
 
     log.info("waiting for clients at udp://{f}", .{udp_address});
@@ -371,6 +372,7 @@ const net = std.Io.net;
 
 const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
+const Assets = @import("Assets.zig");
 const Server = @import("Server.zig");
 const messaging = @import("messaging.zig");
 const Persistent = @import("Persistent.zig");

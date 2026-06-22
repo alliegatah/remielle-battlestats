@@ -27,6 +27,11 @@ pub fn notifyLogicChanges(
                     continue;
                 }
 
+                if (ArgType == *const Assets) {
+                    arg.* = frame.assets;
+                    continue;
+                }
+
                 if (@hasField(ArgType, logic.Changes.subset_marker_name)) {
                     arg.* = changes.extract(ArgType) orelse break :call_notifier;
                     continue;
@@ -114,6 +119,7 @@ fn NotifyOf(Fn: type) type {
 const Allocator = std.mem.Allocator;
 
 const Server = @import("../Server.zig");
+const Assets = @import("../Assets.zig");
 const logic = @import("../logic.zig");
 const messaging = @import("../messaging.zig");
 

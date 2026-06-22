@@ -1,5 +1,6 @@
 const log = std.log.scoped(.@"remielle-gamesv");
 
+assets: *const Assets,
 multi_conversation: kcp.MultiConversation,
 clients: Clients,
 properties: logic.Properties.List,
@@ -24,6 +25,7 @@ pub const Frame = struct {
     target_index: u32,
     time: Io.Timestamp,
     clients: *Clients,
+    assets: *const Assets,
     properties: *logic.Properties.List,
     multi_conversation: *kcp.MultiConversation,
 
@@ -36,9 +38,11 @@ pub fn init(
     /// Used for per-message allocations
     per_message_arena: *heap.ArenaAllocator,
     csprng: Random,
+    assets: *const Assets,
     session_limit: Io.Limit,
 ) Server {
     return .{
+        .assets = assets,
         .multi_conversation = .init,
         .conv_counter = .init,
         .conv_map = .empty,
@@ -180,6 +184,7 @@ pub fn receiveKcpPacket(
     const frame: Frame = .{
         .target_index = client,
         .time = time,
+        .assets = server.assets,
         .clients = &server.clients,
         .properties = &server.properties,
         .multi_conversation = &server.multi_conversation,
@@ -266,6 +271,7 @@ const array_hash_map = std.array_hash_map;
 
 const kcp = @import("kcp.zig");
 const logic = @import("logic.zig");
+const Assets = @import("Assets.zig");
 const messaging = @import("messaging.zig");
 
 const rmio = @import("rmio");
