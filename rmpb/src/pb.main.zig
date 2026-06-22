@@ -14,8 +14,9 @@ fn MapEntry(comptime K: type, comptime V: type) type {
                 else => if (V == []const u8) "" else .init,
             },
         };
-        pub const key_field_number: u32 = 1;
-        pub const value_field_number: u32 = 2;
+
+        pub const key_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+        pub const value_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 
         key: K,
         value: V,
@@ -22876,7 +22877,7 @@ pub const ANHPALJFFPO = struct {
 pub const InteractTarget = enum(i32) {
     InteractTarget_PNNBINADFFJ = 0,
     InteractTarget_DMMDAEELGFA = 1,
-    InteractTarget_FBGICONCBOL = 2,
+    InteractTarget_NPC = 2,
 };
 
 pub const IEAMMCNIKFP = struct {

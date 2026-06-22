@@ -82,8 +82,9 @@ fn writeOutputFileHeader(out: *Io.Writer) Io.Writer.Error!void {
         \\                else => if (V == []const u8) "" else .init,
         \\            },
         \\        };
-        \\        pub const key_field_number: u32 = 1;
-        \\        pub const value_field_number: u32 = 2;
+        \\
+        \\        pub const key_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+        \\        pub const value_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
         \\
         \\        key: K,
         \\        value: V,
