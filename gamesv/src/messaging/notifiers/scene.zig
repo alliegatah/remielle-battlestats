@@ -25,6 +25,8 @@ pub fn switchGameMode(
                     .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
                     .npc_list = npc_list: {
                         const main_city = &assets.graphs.main_city;
+                        const objects_template = &assets.configs.main_city_object;
+
                         const section_index = std.mem.findScalar(
                             u32,
                             main_city.sections,
@@ -39,13 +41,38 @@ pub fn switchGameMode(
                         for (main_city.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
                             .create_npc => {
                                 const create_npc = &main_city.create_npc[action.index];
+                                const tmpl_index = objects_template.tag_ids.getIndex(create_npc.tag_id) orelse
+                                    continue;
+
                                 try npc_id_list.append(notify.allocator, create_npc.tag_id);
 
-                                try npc_list.append(notify.allocator, .{
+                                var npc_info: pb.NpcInfo = .{
                                     .npc_id = create_npc.tag_id,
                                     .is_active = true,
-                                    // TODO: add default interact
-                                });
+                                };
+
+                                if (objects_template.default_interact_ids[tmpl_index] != 0) {
+                                    const name = objects_template.interact_names[tmpl_index];
+
+                                    try npc_info.interacts_info.append(notify.allocator, .{
+                                        .key = objects_template.default_interact_ids[tmpl_index],
+                                        .value = .{
+                                            .tag_id = @intCast(create_npc.tag_id),
+                                            .interact_target_list = .fromOwnedSlice(
+                                                // constCast: this list won't be modified.
+                                                @constCast(default_interact_target_list),
+                                            ),
+                                            .name = objects_template.getString(name),
+                                            .scale_x = 1,
+                                            .scale_y = 1,
+                                            .scale_z = 1,
+                                            .scale_w = 1,
+                                            .scale_r = 1,
+                                        },
+                                    });
+                                }
+
+                                try npc_list.append(notify.allocator, npc_info);
                             },
                             .change_interact => {
                                 const change_interact = &main_city.change_interact[action.index];
@@ -55,6 +82,14 @@ pub fn switchGameMode(
                                     change_interact.tag_id,
                                 ) orelse continue;
 
+                                const tmpl_index = objects_template.tag_ids.getIndex(change_interact.tag_id) orelse
+                                    continue;
+
+                                const name = objects_template.interact_names[tmpl_index];
+
+                                // Clobber existing interact, if any.
+                                npc_list.items[npc_index].interacts_info.items.len = 0;
+
                                 try npc_list.items[npc_index].interacts_info.append(notify.allocator, .{
                                     .key = change_interact.interact_id,
                                     .value = .{
@@ -63,7 +98,7 @@ pub fn switchGameMode(
                                             // constCast: this list won't be modified.
                                             @constCast(default_interact_target_list),
                                         ),
-                                        .name = "A",
+                                        .name = objects_template.getString(name),
                                         .scale_x = 1,
                                         .scale_y = 1,
                                         .scale_z = 1,
