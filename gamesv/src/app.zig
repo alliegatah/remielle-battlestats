@@ -243,11 +243,26 @@ pub fn bind(
 
     log.info("shutting down...", .{});
 
-    if (rmpb.features.isAvailable(.player_kick)) {
-        const current_time: Io.Timestamp = .now(io, .real);
-        var i: u32 = 0;
+    const current_time: Io.Timestamp = .now(io, .real);
+    var i: u32 = 0;
 
-        while (i < server.conv_map.count()) : (i += 1)
+    // Save all online players and, if possible, kick them out gracefully
+    while (i < server.conv_map.count()) : (i += 1) {
+        const uid = server.clients.getPtr(.uid, i);
+
+        savePlayer(
+            io,
+            server_arena.allocator(),
+            &persistent,
+            &server.properties,
+            uid.*,
+            i,
+        ) catch |err| log.err(
+            "failed to save player with uid {d}: {t}",
+            .{ uid.*, err },
+        );
+
+        if (rmpb.features.isAvailable(.player_kick)) {
             notifyPlayerKick(
                 io,
                 udp_socket,
@@ -256,6 +271,7 @@ pub fn bind(
                 i,
                 .PlayerKickReason_ServerClose,
             ) catch {};
+        }
     }
 }
 
