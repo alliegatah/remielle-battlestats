@@ -107,6 +107,7 @@ pub fn switchGameMode(
                                     },
                                 });
                             },
+                            .switch_section, .open_ui => unreachable,
                         };
 
                         break :npc_list npc_list;
