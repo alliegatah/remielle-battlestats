@@ -8,6 +8,7 @@ avatar: Avatar,
 buddy: Buddy,
 weapon: Weapon,
 equip: Equipment,
+hall: Hall,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -23,6 +24,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.buddy, index).* = .init;
     list.getPtr(.weapon, index).* = .init;
     list.getPtr(.equip, index).* = .init;
+    list.getPtr(.hall, index).* = .init;
 
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
@@ -205,6 +207,14 @@ pub const Player = enum(u32) {
     pub fn toInt(player: Player) u32 {
         return @intFromEnum(player);
     }
+};
+
+pub const Hall = struct {
+    section_id: templates.section_config.Id,
+
+    pub const init: Hall = .{
+        .section_id = .MainCity_Street,
+    };
 };
 
 pub const BasicInfo = struct {
@@ -556,6 +566,8 @@ pub fn fromPlayerSave(
         props.getPtr(.equip, index).* = .init;
         unlockAllDiscs(props, player);
     }
+
+    props.getPtr(.hall, index).* = .init; // TODO: persistence
 }
 
 const Allocator = std.mem.Allocator;

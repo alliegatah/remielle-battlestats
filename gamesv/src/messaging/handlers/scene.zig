@@ -1,5 +1,8 @@
 pub fn enterWorld(
     message: Message(pb.EnterWorldCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Hall,
+    }),
     changes: Changes.Builder(.{
         Changes.GameMode,
     }),
@@ -8,7 +11,7 @@ pub fn enterWorld(
     _ = message;
 
     const mode_switch: Changes.GameMode = .{ .hall = .{
-        .section_id = .MainCity_Street,
+        .section_id = properties.hall.section_id,
     } };
 
     changes.insert(mode_switch);
@@ -17,6 +20,9 @@ pub fn enterWorld(
 
 pub fn leaveCurScene(
     message: Message(pb.LeaveCurSceneCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Hall,
+    }),
     changes: Changes.Builder(.{
         Changes.GameMode,
     }),
@@ -25,7 +31,7 @@ pub fn leaveCurScene(
     _ = message;
 
     const mode_switch: Changes.GameMode = .{ .hall = .{
-        .section_id = .MainCity_Street,
+        .section_id = properties.hall.section_id,
     } };
 
     changes.insert(mode_switch);
