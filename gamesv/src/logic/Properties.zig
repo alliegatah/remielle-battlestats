@@ -1,9 +1,11 @@
 pub const Avatar = @import("Properties/Avatar.zig");
+pub const Buddy = @import("Properties/Buddy.zig");
 pub const Weapon = @import("Properties/Weapon.zig");
 pub const Equipment = @import("Properties/Equipment.zig");
 
 basic_info: BasicInfo,
 avatar: Avatar,
+buddy: Buddy,
 weapon: Weapon,
 equip: Equipment,
 
@@ -18,10 +20,12 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
 
     list.getPtr(.basic_info, index).* = .init;
     list.getPtr(.avatar, index).* = .init;
+    list.getPtr(.buddy, index).* = .init;
     list.getPtr(.weapon, index).* = .init;
     list.getPtr(.equip, index).* = .init;
 
     unlockAllAvatars(list, at);
+    unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
     unlockAllDiscs(list, at);
 }
@@ -50,6 +54,30 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
 
         avatar.weapon_uids[i] = .none;
         avatar.equipment_uids[i] = @splat(.none);
+    };
+}
+
+fn unlockAllBuddies(props: *Properties.List, at: Player) void {
+    const buddy = props.getPtr(.buddy, at.toInt());
+
+    for (templates.buddy_base.entries) |template| if (template.id < 55000) {
+        const i = buddy.indexes.count();
+        buddy.indexes.put(template.getId(), @intCast(i));
+        buddy.ids[i] = template.getId();
+
+        buddy.meta[i] = .{
+            .level = .max,
+            .exp = 0,
+            .rank = .max,
+            .star = .init,
+            .skill_levels = .initUndefined(),
+            .flags = .init,
+        };
+
+        inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
+            const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+            buddy.meta[i].skill_levels.set(skill, .maxFor(skill));
+        }
     };
 }
 
@@ -302,6 +330,31 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
+    const buddy = props.getPtr(.buddy, index);
+    const buddy_count = buddy.indexes.count();
+
+    var buddy_save: pb.BuddySave = .init;
+    try buddy_save.items.ensureTotalCapacity(arena, buddy_count);
+
+    for (buddy.ids[0..buddy_count], buddy.meta[0..buddy_count]) |id, *meta| {
+        var skill_levels: std.ArrayList(u32) = try .initCapacity(arena, Properties.Buddy.Skill.Levels.len);
+
+        inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
+            const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+            skill_levels.appendAssumeCapacity(meta.skill_levels.get(skill).toInt());
+        }
+
+        buddy_save.items.appendAssumeCapacity(.{
+            .id = @intFromEnum(id),
+            .level = meta.level.toInt(),
+            .exp = meta.exp,
+            .rank = meta.rank.toInt(),
+            .star = meta.star.toInt(),
+            .favorite = meta.flags.favorite,
+            .skill_levels = skill_levels,
+        });
+    }
+
     const weapon = props.getPtr(.weapon, index);
     var weapon_save: pb.WeaponSave = .init;
     try weapon_save.items.ensureTotalCapacity(arena, weapon.count);
@@ -359,6 +412,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
     return .{
         .basic = basic_save,
         .avatar = avatar_save,
+        .buddy = buddy_save,
         .weapon = weapon_save,
         .equip = equip_save,
     };
@@ -418,6 +472,38 @@ pub fn fromPlayerSave(
     } else {
         props.getPtr(.avatar, index).* = .init;
         unlockAllAvatars(props, player);
+    }
+
+    if (save.buddy) |buddy_save| {
+        const buddy = props.getPtr(.buddy, index);
+        buddy.* = .init;
+
+        for (buddy_save.items.items, 0..) |*item, i| {
+            buddy.indexes.put(@enumFromInt(item.id), @intCast(i));
+            buddy.ids[i] = @enumFromInt(item.id);
+
+            buddy.meta[i] = .{
+                .level = @enumFromInt(item.level),
+                .exp = item.exp,
+                .rank = @enumFromInt(item.rank),
+                .star = @enumFromInt(item.star),
+                .skill_levels = .initUndefined(),
+                .flags = .{
+                    .favorite = item.favorite,
+                },
+            };
+
+            inline for (std.meta.fields(Properties.Buddy.Skill), 0..) |field, skill_i| {
+                const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
+                buddy.meta[i].skill_levels.set(skill, if (item.skill_levels.items.len > skill_i)
+                    @enumFromInt(item.skill_levels.items[skill_i])
+                else
+                    .maxFor(skill));
+            }
+        }
+    } else {
+        props.getPtr(.buddy, index).* = .init;
+        unlockAllBuddies(props, player);
     }
 
     if (save.weapon) |weapon_save| {

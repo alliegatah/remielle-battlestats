@@ -3,6 +3,7 @@ const log = std.log.scoped(.@"remielle-gamesv::messaging");
 const namespaces: []const type = &.{
     @import("handlers/player.zig"),
     @import("handlers/avatar.zig"),
+    @import("handlers/buddy.zig"),
     @import("handlers/item.zig"),
     @import("handlers/quest.zig"),
     @import("handlers/misc.zig"),

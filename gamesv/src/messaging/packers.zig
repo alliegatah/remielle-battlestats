@@ -1,3 +1,27 @@
+pub fn packBuddyInfo(arena: Allocator, id: logic.Properties.Buddy.Id, meta: *const logic.Properties.Buddy.Meta) !pb.BuddyInfo {
+    const Buddy = logic.Properties.Buddy;
+    var skill_levels: ArrayList(pb.BuddySkillLevel) = try .initCapacity(arena, Buddy.Skill.Levels.len);
+
+    inline for (std.meta.fields(Buddy.Skill)) |field| {
+        const skill: Buddy.Skill = @enumFromInt(field.value);
+        const level = meta.skill_levels.get(skill);
+        skill_levels.appendAssumeCapacity(.{
+            .skill_type = skill.toInt(),
+            .level = level.toInt(),
+        });
+    }
+
+    return .{
+        .id = @intFromEnum(id),
+        .level = meta.level.toInt(),
+        .exp = meta.exp,
+        .rank = meta.rank.toInt(),
+        .star = meta.star.toInt(),
+        .is_favorite = meta.flags.favorite,
+        .skill_type_level = skill_levels,
+    };
+}
+
 pub fn packSelfBasicInfo(arena: Allocator, info: *const Properties.BasicInfo) !pb.SelfBasicInfo {
     _ = arena;
 
