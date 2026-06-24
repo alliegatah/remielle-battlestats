@@ -1,18 +1,16 @@
-const size = templates.equipment.entries.len;
-
 pub const max_properties_slots = 1;
 pub const max_sub_properties_slots = 4;
 
 pub const max_properties_per_item = max_properties_slots + max_sub_properties_slots;
 
-pub const max_equipment = 3000;
+pub const capacity = 3_000;
 
 count: u16,
-uids: [max_equipment]Uid,
-ids: [size]u32,
-levels: [max_equipment]Level,
-stars: [max_equipment]Star,
-properties: [max_equipment][max_properties_per_item]?Property,
+uids: [capacity]Uid,
+ids: [capacity]u32,
+levels: [capacity]Level,
+stars: [capacity]Star,
+properties: [capacity][max_properties_per_item]?Property,
 
 pub const init: Equipment = .{
     .count = 0,
