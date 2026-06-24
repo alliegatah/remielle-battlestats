@@ -60,6 +60,27 @@ pub fn enterSection(
     response.set(.init);
 }
 
+pub fn interactWithUnit(
+    assets: *const Assets,
+    message: Message(pb.InteractWithUnitCsReq),
+    changes: Changes.Builder(.{
+        Changes.NpcInteraction,
+    }),
+    response: Response(pb.InteractWithUnitScRsp),
+) !void {
+    const interaction: Changes.NpcInteraction = .{
+        .interact_index = @intCast(std.mem.findScalar(
+            u32,
+            assets.graphs.interacts.ids,
+            @bitCast(message.data.interact_id),
+        ) orelse
+            return response.fail(1)),
+    };
+
+    changes.insert(interaction);
+    response.set(.init);
+}
+
 pub fn enterSectionComplete(
     message: Message(pb.EnterSectionCompleteCsReq),
     response: Response(pb.EnterSectionCompleteScRsp),

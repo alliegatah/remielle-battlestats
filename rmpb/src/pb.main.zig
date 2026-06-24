@@ -12030,6 +12030,12 @@ pub const InteractWithUnitCsReq = struct {
     type: ?InteractTarget = null,
 };
 
+pub const InteractWithUnitScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "InteractWithUnitScRsp";
+    retcode: i32 = 0,
+};
+
 pub const HDDMEPNDMIN = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "HDDMEPNDMIN";

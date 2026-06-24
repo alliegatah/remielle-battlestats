@@ -1,10 +1,12 @@
 game_mode: ?GameMode,
+npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
 avatars: []const Avatar,
 
 pub const init: Changes = .{
     .game_mode = null,
+    .npc_interaction = null,
     .control_avatar = null,
     .control_guise_avatar = null,
     .avatars = &.{},
@@ -44,6 +46,10 @@ pub const GameMode = union(enum) {
             }
         };
     };
+};
+
+pub const NpcInteraction = struct {
+    interact_index: u32,
 };
 
 pub const ControlAvatar = Properties.HallAvatar;

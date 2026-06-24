@@ -108,6 +108,7 @@ pub fn process(
                 inline for (&args, @typeInfo(Args).@"struct".fields) |*arg, arg_info| {
                     switch (arg_info.type) {
                         InMessage => arg.* = message,
+                        *const Assets => arg.* = frame.assets,
 
                         logic.RealTimeClock => arg.* = .{
                             .time = frame.time,
@@ -238,6 +239,12 @@ pub fn Response(Msg: type) type {
 fn MessageOf(comptime Fn: type) type {
     inline for (@typeInfo(Fn).@"fn".params) |param| {
         const Param = param.type.?;
+
+        switch (@typeInfo(Param)) {
+            .@"struct" => {},
+            else => continue,
+        }
+
         if (!@hasField(Param, "data")) continue;
 
         switch (@typeInfo(@FieldType(Param, "data"))) {
@@ -274,6 +281,7 @@ const Server = @import("../Server.zig");
 
 const kcp = @import("../kcp.zig");
 const logic = @import("../logic.zig");
+const Assets = @import("../Assets.zig");
 const messaging = @import("../messaging.zig");
 
 const rmio = @import("rmio");

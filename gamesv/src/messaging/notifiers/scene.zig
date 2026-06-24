@@ -202,6 +202,61 @@ pub fn switchGameMode(
     }
 }
 
+pub fn npcInteraction(
+    assets: *const Assets,
+    properties: Properties.Immutable(.{
+        Properties.Hall,
+    }),
+    changes: logic.Changes.Subset(.{
+        logic.Changes.NpcInteraction,
+    }),
+    notify: Notify(pb.SectionEventScNotify),
+) !void {
+    var action_list: ArrayList(pb.ActionInfo) = .empty;
+
+    const interacts = &assets.graphs.interacts;
+    const event = &interacts.events[changes.npc_interaction.?.interact_index];
+
+    for (interacts.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
+        .create_npc, .change_interact => {}, // TODO: implement through HallRefreshScNotify
+
+        .switch_section => {
+            const switch_section = &interacts.switch_section[action.data.switch_section.toIndex()];
+
+            const info: pb_stable.ActionSwitchSection = .{
+                .section_id = switch_section.section_id,
+                .transform_id = interacts.getString(switch_section.transform_id),
+                .camera_x = switch_section.camera_x,
+                .camera_y = switch_section.camera_y,
+            };
+
+            try action_list.append(notify.allocator, .{
+                .action_type = .ActionType_SWITCH_SECTION,
+                .body = try rmpb.encodeAlloc(.stable, notify.allocator, info),
+            });
+        },
+
+        .open_ui => {
+            const open_ui = &interacts.open_ui[action.data.open_ui.toIndex()];
+
+            const info: pb_stable.ActionOpenUi = .{
+                .ui = interacts.getString(open_ui.ui),
+                .store_template_id = open_ui.store_template_id,
+            };
+
+            try action_list.append(notify.allocator, .{
+                .action_type = .ActionType_OPEN_UI,
+                .body = try rmpb.encodeAlloc(.stable, notify.allocator, info),
+            });
+        },
+    };
+
+    notify.one(.{
+        .section_id = @intFromEnum(properties.hall.section_id),
+        .action_list = action_list,
+    });
+}
+
 const templates = Assets.templates;
 
 const Notify = notifiers.Notify;
@@ -213,5 +268,8 @@ const packers = @import("../packers.zig");
 const notifiers = @import("../notifiers.zig");
 const Properties = @import("../../logic/Properties.zig");
 
-const pb = @import("rmpb").main;
+const pb = rmpb.main;
+const pb_stable = rmpb.stable;
+
+const rmpb = @import("rmpb");
 const std = @import("std");
