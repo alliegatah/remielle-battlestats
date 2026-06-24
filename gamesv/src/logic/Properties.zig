@@ -555,8 +555,8 @@ pub fn fromPlayerSave(
             for (item.properties.items[0..prop_count], equip.properties[i][0..prop_count]) |saved, *property|
                 property.* = .{
                     .key = @enumFromInt(saved.key),
-                    .base_value = saved.base_value,
-                    .add_value = saved.add_value,
+                    .base_value = @truncate(saved.base_value),
+                    .add_value = @truncate(saved.add_value),
                 };
         }
     } else {

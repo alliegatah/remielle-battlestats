@@ -1,6 +1,6 @@
-pub const properties_count = 5;
-
 pub const capacity = 3_000;
+
+pub const properties_count = 5;
 
 count: u16,
 uids: [capacity]Uid,
@@ -74,8 +74,8 @@ pub const Slot = enum(u8) {
 
 pub const Property = struct {
     key: Key,
-    base_value: u32,
-    add_value: u32,
+    base_value: u16,
+    add_value: u16,
 
     pub const none: Property = .{
         .key = .none,
@@ -83,18 +83,18 @@ pub const Property = struct {
         .add_value = 0,
     };
 
-    pub const Key = enum(u32) {
+    pub const Key = enum(u16) {
         none = 0,
         _,
 
-        pub inline fn unwrap(key: Key) ?u32 {
+        pub inline fn unwrap(key: Key) ?u16 {
             return switch (key) {
                 .none => null,
                 else => @intFromEnum(key),
             };
         }
 
-        pub inline fn fromInt(int: u32) Key {
+        pub inline fn fromInt(int: u16) Key {
             return @enumFromInt(int);
         }
     };
