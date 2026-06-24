@@ -36,6 +36,32 @@ pub const PacketHead = struct {
     pub const ack_packet_id_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
 };
 
+pub const ActionOpenUi = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "ActionOpenUi";
+    ui: []const u8 = "",
+    args: i32 = 0,
+    store_template_id: u32 = 0,
+    npc_id: u32 = 0,
+    pub const ui_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const args_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const store_template_id_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const npc_id_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
+};
+
+pub const ActionSwitchSection = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "ActionSwitchSection";
+    section_id: u32 = 0,
+    transform_id: []const u8 = "",
+    camera_x: u32 = 0,
+    camera_y: u32 = 0,
+    pub const section_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const camera_x_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const camera_y_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+};
+
 pub const PlayerSave = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PlayerSave";

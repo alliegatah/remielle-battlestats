@@ -1,5 +1,6 @@
 const stable_protos: []const []const u8 = &.{
     "rmpb/cs_proto/head.proto",
+    "rmpb/cs_proto/action.proto",
     "rmpb/cs_proto/persistence.proto",
 };
 
