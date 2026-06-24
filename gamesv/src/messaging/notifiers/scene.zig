@@ -40,7 +40,7 @@ pub fn switchGameMode(
 
                         for (main_city.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
                             .create_npc => {
-                                const create_npc = &main_city.create_npc[action.index];
+                                const create_npc = action.data.create_npc;
                                 const tmpl_index = objects_template.tag_ids.getIndex(create_npc.tag_id) orelse
                                     continue;
 
@@ -75,7 +75,7 @@ pub fn switchGameMode(
                                 try npc_list.append(notify.allocator, npc_info);
                             },
                             .change_interact => {
-                                const change_interact = &main_city.change_interact[action.index];
+                                const change_interact = &main_city.change_interact[action.data.change_interact.toIndex()];
                                 const npc_index = std.mem.findScalar(
                                     u32,
                                     npc_id_list.items,

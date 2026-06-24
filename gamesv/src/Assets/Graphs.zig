@@ -21,20 +21,33 @@ pub const Event = packed struct {
     last_action: u32,
 };
 
-pub const Action = packed struct {
+pub const Action = packed struct(u64) {
+    tag: Tag,
+    data: Data,
+
     const Tag = enum(u32) {
         create_npc = 1,
         change_interact = 2,
     };
 
-    tag: Tag,
-    index: u32,
+    const Data = packed union(u32) {
+        create_npc: CreateNpc,
+        change_interact: ExtraIndex,
+    };
 
-    const CreateNpc = packed struct {
+    pub const ExtraIndex = enum(u32) {
+        _,
+
+        pub inline fn toIndex(ei: ExtraIndex) u32 {
+            return @intFromEnum(ei);
+        }
+    };
+
+    pub const CreateNpc = packed struct {
         tag_id: u32,
     };
 
-    const ChangeInteract = packed struct {
+    pub const ChangeInteract = packed struct {
         tag_id: u32,
         interact_id: u32,
     };
@@ -44,7 +57,6 @@ pub const MainCity = struct {
     sections: []const u32,
     events: [*]const Event,
     actions: [*]const Action,
-    create_npc: [*]const Action.CreateNpc,
     change_interact: [*]const Action.ChangeInteract,
 
     const Header = packed struct {
@@ -52,7 +64,6 @@ pub const MainCity = struct {
         sections_offset: u32,
         events_offset: u32,
         actions_offset: u32,
-        create_npc_offset: u32,
         change_interact_offset: u32,
     };
 
@@ -65,7 +76,6 @@ pub const MainCity = struct {
             )),
             .events = @ptrCast(@alignCast(bytes[header.events_offset..].ptr)),
             .actions = @ptrCast(@alignCast(bytes[header.actions_offset..].ptr)),
-            .create_npc = @ptrCast(@alignCast(bytes[header.create_npc_offset..].ptr)),
             .change_interact = @ptrCast(@alignCast(bytes[header.change_interact_offset..].ptr)),
         };
     }
