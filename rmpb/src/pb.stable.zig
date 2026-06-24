@@ -36,45 +36,19 @@ pub const PacketHead = struct {
     pub const ack_packet_id_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
 };
 
-pub const BuddySave = struct {
-    pub const init: @This() = .{};
-    pub const pb_desc_name = "BuddySave";
-    items: std.ArrayList(BuddyItemSave) = .empty,
-    pub const items_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-};
-
-pub const BuddyItemSave = struct {
-    pub const init: @This() = .{};
-    pub const pb_desc_name = "BuddyItemSave";
-    id: u32 = 0,
-    level: u32 = 0,
-    exp: u32 = 0,
-    rank: u32 = 0,
-    star: u32 = 0,
-    favorite: bool = false,
-    skill_levels: std.ArrayList(u32) = .empty,
-    pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const level_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
-    pub const exp_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
-    pub const rank_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
-    pub const star_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
-    pub const favorite_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
-    pub const skill_levels_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
-};
-
 pub const PlayerSave = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PlayerSave";
-    pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
-    buddy: ?BuddySave = null,
     basic: ?BasicSave = null,
     avatar: ?AvatarSave = null,
     weapon: ?WeaponSave = null,
     equip: ?EquipSave = null,
+    buddy: ?BuddySave = null,
     pub const basic_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const weapon_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const equip_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
 };
 
 pub const BasicSave = struct {
@@ -178,3 +152,30 @@ pub const EquipProperty = struct {
     pub const base_value_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const add_value_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
 };
+
+pub const BuddySave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "BuddySave";
+    items: std.ArrayList(BuddyItemSave) = .empty,
+    pub const items_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+};
+
+pub const BuddyItemSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "BuddyItemSave";
+    id: u32 = 0,
+    level: u32 = 0,
+    exp: u32 = 0,
+    rank: u32 = 0,
+    star: u32 = 0,
+    favorite: bool = false,
+    skill_levels: std.ArrayList(u32) = .empty,
+    pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const level_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const exp_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+    pub const rank_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const star_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
+    pub const favorite_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const skill_levels_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
+};
+
