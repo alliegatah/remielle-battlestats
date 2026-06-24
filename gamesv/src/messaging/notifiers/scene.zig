@@ -38,7 +38,7 @@ pub fn switchGameMode(
 
                         const event = &main_city.events[section_index];
 
-                        for (main_city.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
+                        for (main_city.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
                             .create_npc => {
                                 const create_npc = action.data.create_npc;
                                 const tmpl_index = objects_template.tag_ids.getIndex(create_npc.tag_id) orelse
@@ -217,7 +217,7 @@ pub fn npcInteraction(
     const interacts = &assets.graphs.interacts;
     const event = &interacts.events[changes.npc_interaction.?.interact_index];
 
-    for (interacts.actions[event.first_action..event.last_action]) |*action| switch (action.tag) {
+    for (interacts.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
         .create_npc, .change_interact => {}, // TODO: implement through HallRefreshScNotify
 
         .switch_section => {

@@ -29,8 +29,8 @@ pub fn load(io: Io, arena: Allocator) !Graphs {
 }
 
 pub const Event = packed struct {
-    first_action: u32,
-    last_action: u32,
+    actions_begin: u32,
+    actions_end: u32,
 };
 
 pub const Action = packed struct(u64) {
