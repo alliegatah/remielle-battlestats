@@ -3,6 +3,7 @@ pub fn switchGameMode(
         logic.Properties.BasicInfo,
         logic.Properties.Avatar,
         logic.Properties.Weapon,
+        logic.Properties.Equipment,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.GameMode,
@@ -44,6 +45,11 @@ pub fn switchGameMode(
                         training.avatars.len,
                     );
 
+                    var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(
+                        notify.allocator,
+                        training.avatars.len * Properties.Avatar.equipment_slots,
+                    );
+
                     for (training.avatars) |slot| if (slot.toId()) |avatar_id| {
                         const index = properties.avatar.indexes.get(avatar_id).?;
 
@@ -71,11 +77,30 @@ pub fn switchGameMode(
                                 .refine_level = properties.weapon.refines[weapon_index].toInt(),
                             });
                         }
+
+                        for (properties.avatar.equipment_uids[index]) |uid| {
+                            const equip_uid = logic.Properties.Equipment.Uid.fromInt(uid.unwrap() orelse continue).?;
+                            const equip_index = std.mem.findScalar(
+                                logic.Properties.Equipment.Uid,
+                                &properties.equip.uids,
+                                equip_uid,
+                            ).?;
+
+                            equip_list.appendAssumeCapacity(try packers.packEquipmentInfo(
+                                notify.allocator,
+                                equip_uid,
+                                properties.equip.ids[equip_index],
+                                properties.equip.levels[equip_index],
+                                properties.equip.stars[equip_index],
+                                properties.equip.properties[equip_index],
+                            ));
+                        }
                     };
 
                     break :dungeon_package_info .{
                         .avatar_list = avatar_list,
                         .weapon_list = weapon_list,
+                        .equip_list = equip_list,
                     };
                 },
             },
@@ -92,6 +117,7 @@ const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");
 const packers = @import("../packers.zig");
 const notifiers = @import("../notifiers.zig");
+const Properties = @import("../../logic/Properties.zig");
 
 const pb = @import("rmpb").main;
 const std = @import("std");

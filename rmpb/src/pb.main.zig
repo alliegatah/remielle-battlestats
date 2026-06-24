@@ -18056,6 +18056,12 @@ pub const EquipmentUnDressCsReq = struct {
     undress_index_list: std.ArrayList(u32) = .empty,
 };
 
+pub const EquipmentUnDressScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "EquipmentUnDressScRsp";
+    retcode: i32 = 0,
+};
+
 pub const CNEKPBMPANF = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "CNEKPBMPANF";
@@ -22595,6 +22601,12 @@ pub const EquipmentDressCsReq = struct {
     equip_uid: u32 = 0,
     dress_index: u32 = 0,
     avatar_id: u32 = 0,
+};
+
+pub const EquipmentDressScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "EquipmentDressScRsp";
+    retcode: i32 = 0,
 };
 
 pub const DNKCJMEHIAF = struct {

@@ -29,10 +29,29 @@ pub fn getWeaponData(
 
 pub fn getEquipData(
     message: Message(pb.GetEquipDataCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Equipment,
+    }),
     response: Response(pb.GetEquipDataScRsp),
 ) !void {
     _ = message;
-    response.set(.init);
+
+    var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(response.allocator, properties.equip.count);
+
+    var i: u16 = 0;
+
+    while (i < properties.equip.count) : (i += 1) {
+        equip_list.appendAssumeCapacity(try packers.packEquipmentInfo(
+            response.allocator,
+            properties.equip.uids[i],
+            properties.equip.ids[i],
+            properties.equip.levels[i],
+            properties.equip.stars[i],
+            properties.equip.properties[i],
+        ));
+    }
+
+    response.set(.{ .equip_list = equip_list });
 }
 
 pub fn getItemData(
@@ -69,6 +88,7 @@ const Message = handlers.Message;
 const Response = handlers.Response;
 const Properties = logic.Properties;
 
+const packers = @import("../../messaging/packers.zig");
 const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");
 const handlers = @import("../handlers.zig");

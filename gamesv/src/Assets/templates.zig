@@ -19,3 +19,5 @@ pub const ItemCount = struct {
     item_id: u32,
     number: u32,
 };
+
+pub const equipment = @import("templates/equipment.zig");

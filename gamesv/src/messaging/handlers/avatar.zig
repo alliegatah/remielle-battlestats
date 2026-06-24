@@ -241,6 +241,115 @@ pub fn weaponUnDress(
     response.set(.init);
 }
 
+pub fn equipmentDress(
+    message: Message(pb.EquipmentDressCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.EquipmentDressScRsp),
+) !void {
+    const index: u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    } orelse return response.fail(1);
+
+    const dress_index = Properties.Equipment.Slot.fromInt(message.data.dress_index) orelse
+        return response.fail(1);
+
+    const equip_uid = message.data.equip_uid;
+
+    const avatars = try changes.allocator.alloc(Changes.Avatar, 2);
+
+    var equipment_uids = properties.avatar.equipment_uids[index];
+
+    const old_equip_id = equipment_uids[dress_index.toIndex()];
+    equipment_uids[dress_index.toIndex()] = @enumFromInt(equip_uid);
+
+    avatars[0] = .{
+        .id = properties.avatar.ids[index],
+        .meta = properties.avatar.meta[index],
+        .weapon_uid = properties.avatar.weapon_uids[index],
+        .equipment_uids = equipment_uids,
+    };
+
+    var changes_count: usize = 1;
+
+    const slots = Avatar.equipment_slots;
+
+    const equipments = @as(
+        [*]const Properties.Avatar.OptionalUID,
+        @ptrCast(&properties.avatar.equipment_uids),
+    )[0 .. properties.avatar.count() * slots];
+
+    if (std.mem.findScalar(
+        Properties.Avatar.OptionalUID,
+        equipments,
+        @enumFromInt(equip_uid),
+    )) |prev_owner_index| {
+        const avatar_idx = prev_owner_index / slots;
+        const slot_idx = prev_owner_index % slots;
+
+        changes_count = 2;
+
+        var prev_owner_equipments_uids = properties.avatar.equipment_uids[avatar_idx];
+        prev_owner_equipments_uids[slot_idx] = @enumFromInt(old_equip_id.unwrap() orelse 0);
+
+        avatars[1] = .{
+            .id = properties.avatar.ids[avatar_idx],
+            .meta = properties.avatar.meta[avatar_idx],
+            .weapon_uid = properties.avatar.weapon_uids[avatar_idx],
+            .equipment_uids = prev_owner_equipments_uids,
+        };
+    }
+
+    changes.insert(avatars[0..changes_count]);
+    response.set(.init);
+}
+
+pub fn equipmentUnDress(
+    message: Message(pb.EquipmentUnDressCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.EquipmentUnDressScRsp),
+) !void {
+    const index: u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    } orelse return response.fail(1);
+
+    const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+
+    var equipment_uids = properties.avatar.equipment_uids[index];
+
+    for (message.data.undress_index_list.items) |dress_i| {
+        const dress_index = Properties.Equipment.Slot.fromInt(dress_i) orelse
+            return response.fail(1);
+
+        equipment_uids[dress_index.toIndex()] = .none;
+    }
+
+    avatars[0] = .{
+        .id = properties.avatar.ids[index],
+        .meta = properties.avatar.meta[index],
+        .weapon_uid = properties.avatar.weapon_uids[index],
+        .equipment_uids = equipment_uids,
+    };
+
+    changes.insert(avatars);
+    response.set(.init);
+}
+
 const Avatar = Properties.Avatar;
 const ArrayList = std.ArrayList;
 const templates = Assets.templates;

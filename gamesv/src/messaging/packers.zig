@@ -46,8 +46,50 @@ pub fn packAvatarInfo(
     };
 }
 
+pub fn packEquipmentInfo(
+    arena: Allocator,
+    uid: Equipment.Uid,
+    id: u32,
+    level: Equipment.Level,
+    star: Equipment.Star,
+    properties: [Equipment.max_properties_per_item]?Equipment.Property,
+) !pb.EquipInfo {
+    var equip_properties: ArrayList(pb.EquipProperty) = try .initCapacity(arena, Properties.Equipment.max_properties_slots);
+    var equip_sub_properties: ArrayList(pb.EquipProperty) = try .initCapacity(arena, Properties.Equipment.max_sub_properties_slots);
+
+    for (properties, 0..) |prop, prop_index| {
+        if (prop_index >= Properties.Equipment.max_properties_per_item) break;
+
+        if (prop == null) continue;
+
+        if (prop_index == 0) {
+            equip_properties.appendAssumeCapacity(.{
+                .key = prop.?.key,
+                .base_value = prop.?.base_value,
+                .add_value = prop.?.add_value,
+            });
+        } else {
+            equip_sub_properties.appendAssumeCapacity(.{
+                .key = prop.?.key,
+                .base_value = prop.?.base_value,
+                .add_value = prop.?.add_value,
+            });
+        }
+    }
+
+    return .{
+        .uid = uid.toInt(),
+        .id = id,
+        .level = level.toInt(),
+        .star = star.toInt(),
+        .propertys = equip_properties,
+        .sub_propertys = equip_sub_properties,
+    };
+}
+
 const ArrayList = std.ArrayList;
 const Avatar = Properties.Avatar;
+const Equipment = Properties.Equipment;
 const Properties = logic.Properties;
 const Allocator = std.mem.Allocator;
 

@@ -1,9 +1,11 @@
 pub const Avatar = @import("Properties/Avatar.zig");
 pub const Weapon = @import("Properties/Weapon.zig");
+pub const Equipment = @import("Properties/Equipment.zig");
 
 basic_info: BasicInfo,
 avatar: Avatar,
 weapon: Weapon,
+equip: Equipment,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -17,9 +19,11 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.basic_info, index).* = .init;
     list.getPtr(.avatar, index).* = .init;
     list.getPtr(.weapon, index).* = .init;
+    list.getPtr(.equip, index).* = .init;
 
     unlockAllAvatars(list, at);
     unlockAllWeapons(list, at);
+    unlockAllDiscs(list, at);
 }
 
 fn unlockAllAvatars(props: *Properties.List, at: Player) void {
@@ -61,6 +65,47 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
         weapon.levels[i] = .max;
         weapon.stars[i] = .max;
         weapon.refines[i] = .max;
+    }
+}
+
+// TODO: Remove after player data manager is implemented
+fn unlockAllDiscs(props: *Properties.List, at: Player) void {
+    const equip: *Properties.Equipment = props.getPtr(.equip, at.toInt());
+
+    for (templates.equipment.entries) |template| {
+        defer equip.count += 1;
+        const i = equip.count;
+
+        equip.uids[i] = @enumFromInt(i);
+        equip.ids[i] = template.item_id;
+        equip.levels[i] = .max;
+        equip.stars[i] = .init;
+        equip.properties[i] = .{
+            // Main property
+            .{
+                .key = 11103,
+                .base_value = 550,
+                .add_value = 0,
+            },
+
+            // Sub properties
+            .{
+                .key = 31203,
+                .base_value = 9,
+                .add_value = 2,
+            },
+            .{
+                .key = 20103,
+                .base_value = 240,
+                .add_value = 4,
+            },
+            .{
+                .key = 21103,
+                .base_value = 480,
+                .add_value = 2,
+            },
+            null,
+        };
     }
 }
 
@@ -277,10 +322,45 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
+    const equip: *Equipment = props.getPtr(.equip, index);
+    var equip_save: pb.EquipSave = .init;
+    try equip_save.items.ensureTotalCapacity(arena, equip.count);
+
+    for (
+        equip.uids[0..equip.count],
+        equip.ids[0..equip.count],
+        equip.levels[0..equip.count],
+        equip.stars[0..equip.count],
+        equip.properties[0..equip.count],
+    ) |uid, id, level, star, properties| {
+        var equip_properties: std.ArrayList(pb.EquipProperty) = try .initCapacity(arena, Equipment.max_properties_per_item);
+
+        for (properties, 0..) |prop, prop_index| {
+            if (prop_index >= Equipment.max_properties_per_item) break;
+
+            if (prop == null) continue;
+
+            equip_properties.appendAssumeCapacity(.{
+                .key = prop.?.key,
+                .base_value = prop.?.base_value,
+                .add_value = prop.?.add_value,
+            });
+        }
+
+        equip_save.items.appendAssumeCapacity(.{
+            .uid = @intFromEnum(uid),
+            .id = id,
+            .level = level.toInt(),
+            .star = star.toInt(),
+            .properties = equip_properties,
+        });
+    }
+
     return .{
         .basic = basic_save,
         .avatar = avatar_save,
         .weapon = weapon_save,
+        .equip = equip_save,
     };
 }
 
@@ -356,6 +436,39 @@ pub fn fromPlayerSave(
     } else {
         props.getPtr(.weapon, index).* = .init;
         unlockAllWeapons(props, player);
+    }
+
+    if (save.equip) |equip_save| {
+        const equip = props.getPtr(.equip, index);
+        equip.* = .init;
+
+        equip.count = @intCast(equip_save.items.items.len);
+
+        for (equip_save.items.items, 0..) |*item, i| {
+            for (item.properties.items, 0..) |prop, prop_index| {
+                if (prop_index >= Equipment.max_properties_per_item) break;
+
+                if (item.properties.items.len == 0) break;
+
+                if (prop_index >= item.properties.items.len - 1) {
+                    equip.properties[i][prop_index] = null;
+                } else {
+                    equip.properties[i][prop_index] = .{
+                        .key = prop.key,
+                        .base_value = prop.base_value,
+                        .add_value = prop.add_value,
+                    };
+                }
+            }
+
+            equip.uids[i] = @enumFromInt(item.uid);
+            equip.ids[i] = item.id;
+            equip.levels[i] = @enumFromInt(item.level);
+            equip.stars[i] = @enumFromInt(item.star);
+        }
+    } else {
+        props.getPtr(.equip, index).* = .init;
+        unlockAllDiscs(props, player);
     }
 }
 

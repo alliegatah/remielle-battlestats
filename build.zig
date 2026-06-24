@@ -147,6 +147,7 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("UrbanAreaMapTemplateTb", "assets/filecfg/UrbanAreaMapTemplateTb.zon"),
     .asset("UrbanAreaMapGroupTemplateTb", "assets/filecfg/UrbanAreaMapGroupTemplateTb.zon"),
     .asset("TeleportConfigTemplateTb", "assets/filecfg/TeleportConfigTemplateTb.zon"),
+    .asset("EquipmentTemplateTb", "assets/filecfg/EquipmentTemplateTb.zon"),
 };
 
 const dpsv_assets: []const StaticAsset = &.{
