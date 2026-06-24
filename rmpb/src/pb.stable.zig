@@ -70,11 +70,13 @@ pub const PlayerSave = struct {
     weapon: ?WeaponSave = null,
     equip: ?EquipSave = null,
     buddy: ?BuddySave = null,
+    hall: ?HallSave = null,
     pub const basic_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const weapon_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const equip_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
+    pub const hall_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
 };
 
 pub const BasicSave = struct {
@@ -203,5 +205,12 @@ pub const BuddyItemSave = struct {
     pub const star_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
     pub const favorite_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const skill_levels_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
+};
+
+pub const HallSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "HallSave";
+    section_id: u32 = 0,
+    pub const section_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
 };
 

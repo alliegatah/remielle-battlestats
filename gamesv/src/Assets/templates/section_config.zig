@@ -29,7 +29,7 @@ pub const Template = struct {
     section_name: []const u8,
 
     pub inline fn getId(t: *const Template) Id {
-        return @enumFromInt(t.id);
+        return @enumFromInt(t.section_id);
     }
 };
 

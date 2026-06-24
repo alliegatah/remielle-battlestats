@@ -419,12 +419,18 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         });
     }
 
+    const hall = props.getPtr(.hall, index);
+    const hall_save: pb.HallSave = .{
+        .section_id = @intFromEnum(hall.section_id),
+    };
+
     return .{
         .basic = basic_save,
         .avatar = avatar_save,
         .buddy = buddy_save,
         .weapon = weapon_save,
         .equip = equip_save,
+        .hall = hall_save,
     };
 }
 
@@ -567,7 +573,9 @@ pub fn fromPlayerSave(
         unlockAllDiscs(props, player);
     }
 
-    props.getPtr(.hall, index).* = .init; // TODO: persistence
+    props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
+        .section_id = @enumFromInt(hall_save.section_id),
+    } else .init;
 }
 
 const Allocator = std.mem.Allocator;
