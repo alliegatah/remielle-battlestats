@@ -29,7 +29,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
-    unlockAllDiscs(list, at);
+    addConfiguredEquipment(list, at);
 }
 
 fn unlockAllAvatars(props: *Properties.List, at: Player) void {
@@ -98,44 +98,25 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
     }
 }
 
-// TODO: Remove after player data manager is implemented
-fn unlockAllDiscs(props: *Properties.List, at: Player) void {
+// TODO: Remove after server control protocol is implemented.
+fn addConfiguredEquipment(props: *Properties.List, at: Player) void {
     const equip: *Properties.Equipment = props.getPtr(.equip, at.toInt());
 
-    for (templates.equipment.entries) |template| {
+    inline for (@import("config").starting_equipment) |entry| {
         defer equip.count += 1;
         const i = equip.count;
 
         equip.uids[i] = @enumFromInt(i);
-        equip.ids[i] = template.item_id;
-        equip.levels[i] = .max;
-        equip.stars[i] = .init;
-        equip.properties[i] = .{
-            // Main property
-            .{
-                .key = .fromInt(11103),
-                .base_value = 550,
-                .add_value = 0,
-            },
+        equip.ids[i] = entry.id;
+        equip.levels[i] = @enumFromInt(entry.level);
+        equip.stars[i] = @enumFromInt(entry.star);
 
-            // Sub properties
-            .{
-                .key = .fromInt(31203),
-                .base_value = 9,
-                .add_value = 2,
-            },
-            .{
-                .key = .fromInt(20103),
-                .base_value = 240,
-                .add_value = 4,
-            },
-            .{
-                .key = .fromInt(21103),
-                .base_value = 480,
-                .add_value = 2,
-            },
-            .none,
-        };
+        inline for (entry.properties, &equip.properties[i]) |config, *property|
+            property.* = .{
+                .key = @enumFromInt(config.key),
+                .base_value = config.base_value,
+                .add_value = config.add_value,
+            };
     }
 }
 
@@ -561,7 +542,7 @@ pub fn fromPlayerSave(
         }
     } else {
         props.getPtr(.equip, index).* = .init;
-        unlockAllDiscs(props, player);
+        addConfiguredEquipment(props, player);
     }
 
     props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
