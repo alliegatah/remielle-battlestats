@@ -113,28 +113,28 @@ fn unlockAllDiscs(props: *Properties.List, at: Player) void {
         equip.properties[i] = .{
             // Main property
             .{
-                .key = 11103,
+                .key = .fromInt(11103),
                 .base_value = 550,
                 .add_value = 0,
             },
 
             // Sub properties
             .{
-                .key = 31203,
+                .key = .fromInt(31203),
                 .base_value = 9,
                 .add_value = 2,
             },
             .{
-                .key = 20103,
+                .key = .fromInt(20103),
                 .base_value = 240,
                 .add_value = 4,
             },
             .{
-                .key = 21103,
+                .key = .fromInt(21103),
                 .base_value = 480,
                 .add_value = 2,
             },
-            null,
+            .none,
         };
     }
 }
@@ -395,20 +395,17 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         equip.levels[0..equip.count],
         equip.stars[0..equip.count],
         equip.properties[0..equip.count],
-    ) |uid, id, level, star, properties| {
-        var equip_properties: std.ArrayList(pb.EquipProperty) = try .initCapacity(arena, Equipment.max_properties_per_item);
+    ) |uid, id, level, star, *properties| {
+        var equip_properties: std.ArrayList(pb.EquipProperty) = try .initCapacity(
+            arena,
+            Equipment.properties_count,
+        );
 
-        for (properties, 0..) |prop, prop_index| {
-            if (prop_index >= Equipment.max_properties_per_item) break;
-
-            if (prop == null) continue;
-
-            equip_properties.appendAssumeCapacity(.{
-                .key = prop.?.key,
-                .base_value = prop.?.base_value,
-                .add_value = prop.?.add_value,
-            });
-        }
+        for (properties) |*prop| equip_properties.appendAssumeCapacity(.{
+            .key = @intFromEnum(prop.key),
+            .base_value = prop.base_value,
+            .add_value = prop.add_value,
+        });
 
         equip_save.items.appendAssumeCapacity(.{
             .uid = @intFromEnum(uid),
@@ -547,26 +544,20 @@ pub fn fromPlayerSave(
         equip.count = @intCast(equip_save.items.items.len);
 
         for (equip_save.items.items, 0..) |*item, i| {
-            for (item.properties.items, 0..) |prop, prop_index| {
-                if (prop_index >= Equipment.max_properties_per_item) break;
-
-                if (item.properties.items.len == 0) break;
-
-                if (prop_index >= item.properties.items.len - 1) {
-                    equip.properties[i][prop_index] = null;
-                } else {
-                    equip.properties[i][prop_index] = .{
-                        .key = prop.key,
-                        .base_value = prop.base_value,
-                        .add_value = prop.add_value,
-                    };
-                }
-            }
-
             equip.uids[i] = @enumFromInt(item.uid);
             equip.ids[i] = item.id;
             equip.levels[i] = @enumFromInt(item.level);
             equip.stars[i] = @enumFromInt(item.star);
+            equip.properties[i] = @splat(.none);
+
+            const prop_count = @min(item.properties.items.len, Equipment.properties_count);
+
+            for (item.properties.items[0..prop_count], equip.properties[i][0..prop_count]) |saved, *property|
+                property.* = .{
+                    .key = @enumFromInt(saved.key),
+                    .base_value = saved.base_value,
+                    .add_value = saved.add_value,
+                };
         }
     } else {
         props.getPtr(.equip, index).* = .init;

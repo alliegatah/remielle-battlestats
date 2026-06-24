@@ -47,7 +47,7 @@ pub fn getEquipData(
             properties.equip.ids[i],
             properties.equip.levels[i],
             properties.equip.stars[i],
-            properties.equip.properties[i],
+            &properties.equip.properties[i],
         ));
     }
 

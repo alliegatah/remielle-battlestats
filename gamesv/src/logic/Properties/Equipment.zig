@@ -1,7 +1,4 @@
-pub const max_properties_slots = 1;
-pub const max_sub_properties_slots = 4;
-
-pub const max_properties_per_item = max_properties_slots + max_sub_properties_slots;
+pub const properties_count = 5;
 
 pub const capacity = 3_000;
 
@@ -10,7 +7,7 @@ uids: [capacity]Uid,
 ids: [capacity]u32,
 levels: [capacity]Level,
 stars: [capacity]Star,
-properties: [capacity][max_properties_per_item]?Property,
+properties: [capacity][properties_count]Property,
 
 pub const init: Equipment = .{
     .count = 0,
@@ -76,9 +73,31 @@ pub const Slot = enum(u8) {
 };
 
 pub const Property = struct {
-    key: u32,
+    key: Key,
     base_value: u32,
     add_value: u32,
+
+    pub const none: Property = .{
+        .key = .none,
+        .base_value = 0,
+        .add_value = 0,
+    };
+
+    pub const Key = enum(u32) {
+        none = 0,
+        _,
+
+        pub inline fn unwrap(key: Key) ?u32 {
+            return switch (key) {
+                .none => null,
+                else => @intFromEnum(key),
+            };
+        }
+
+        pub inline fn fromInt(int: u32) Key {
+            return @enumFromInt(int);
+        }
+    };
 };
 
 const templates = Assets.templates;

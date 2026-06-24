@@ -186,7 +186,7 @@ pub fn switchGameMode(
                                 properties.equip.ids[equip_index],
                                 properties.equip.levels[equip_index],
                                 properties.equip.stars[equip_index],
-                                properties.equip.properties[equip_index],
+                                &properties.equip.properties[equip_index],
                             ));
                         }
                     };

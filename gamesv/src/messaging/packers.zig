@@ -76,38 +76,33 @@ pub fn packEquipmentInfo(
     id: u32,
     level: Equipment.Level,
     star: Equipment.Star,
-    properties: [Equipment.max_properties_per_item]?Equipment.Property,
+    properties: *const [Equipment.properties_count]Equipment.Property,
 ) !pb.EquipInfo {
-    var equip_properties: ArrayList(pb.EquipProperty) = try .initCapacity(arena, Properties.Equipment.max_properties_slots);
-    var equip_sub_properties: ArrayList(pb.EquipProperty) = try .initCapacity(arena, Properties.Equipment.max_sub_properties_slots);
+    var equip_properties: ArrayList(pb.EquipProperty) = try .initCapacity(
+        arena,
+        Properties.Equipment.properties_count,
+    );
 
-    for (properties, 0..) |prop, prop_index| {
-        if (prop_index >= Properties.Equipment.max_properties_per_item) break;
+    equip_properties.appendAssumeCapacity(.{
+        .key = @intFromEnum(properties[0].key), // main property is required.
+        .base_value = properties[0].base_value,
+        .add_value = properties[0].add_value,
+    });
 
-        if (prop == null) continue;
-
-        if (prop_index == 0) {
-            equip_properties.appendAssumeCapacity(.{
-                .key = prop.?.key,
-                .base_value = prop.?.base_value,
-                .add_value = prop.?.add_value,
-            });
-        } else {
-            equip_sub_properties.appendAssumeCapacity(.{
-                .key = prop.?.key,
-                .base_value = prop.?.base_value,
-                .add_value = prop.?.add_value,
-            });
-        }
-    }
+    for (properties[1..]) |prop| if (prop.key.unwrap()) |key|
+        equip_properties.appendAssumeCapacity(.{
+            .key = key,
+            .base_value = prop.base_value,
+            .add_value = prop.add_value,
+        });
 
     return .{
         .uid = uid.toInt(),
         .id = id,
         .level = level.toInt(),
         .star = star.toInt(),
-        .propertys = equip_properties,
-        .sub_propertys = equip_sub_properties,
+        .propertys = .fromOwnedSlice(equip_properties.items[0..1]),
+        .sub_propertys = .fromOwnedSlice(equip_properties.items[1..]),
     };
 }
 
