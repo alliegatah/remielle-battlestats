@@ -114,6 +114,20 @@ pub fn encodingLength(comptime desc_set: Descriptors, message: anytype) u64 {
     return discarding.fullCount();
 }
 
+pub fn encodeAlloc(
+    comptime desc_set: Descriptors,
+    arena: Allocator,
+    message: anytype,
+) Allocator.Error![]const u8 {
+    var allocating: Io.Writer.Allocating = .init(arena);
+    errdefer allocating.deinit();
+
+    encode(desc_set, &allocating.writer, message) catch
+        return error.OutOfMemory;
+
+    return allocating.written();
+}
+
 pub fn encode(comptime desc_set: Descriptors, writer: *Io.Writer, message: anytype) Io.Writer.Error!void {
     const Message = @TypeOf(message);
     const descriptor = desc_set.describe(Message) orelse
