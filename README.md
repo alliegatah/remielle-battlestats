@@ -26,8 +26,7 @@ Linux:
 git clone https://git.xeondev.com/remielle/remielle.git
 cd remielle
 . ./envrc # The `envrc` script will setup the zig compiler for you.
-zig build serve-dp &
-zig build serve-game
+zig build serve-all
 ```
 Windows (powershell):
 ```ps1
@@ -35,7 +34,7 @@ Windows (powershell):
 git clone https://git.xeondev.com/remielle/remielle.git
 cd remielle
 ./envrc.ps1 # The `envrc.ps1` script will setup the zig compiler for you.
-Start-Process zig -ArgumentList "build serve-dp" -NoNewWindow; zig build serve-game
+zig build serve-all
 ```
 
 ## Configuration
