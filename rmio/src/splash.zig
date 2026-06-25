@@ -39,7 +39,7 @@ fn writeAll(file: std.Io.File.Handle, content: []const u8) !void {
         while (cursor.len != 0) {
             const rc = posix.system.write(file, cursor.ptr, @truncate(cursor.len));
             switch (posix.system.errno(rc)) {
-                .SUCCESS => cursor = cursor[rc..],
+                .SUCCESS => cursor = cursor[@bitCast(rc)..],
                 else => return error.WriteFailed,
             }
         }
