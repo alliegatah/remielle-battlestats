@@ -1,5 +1,7 @@
 pub const entries: []const Template = @import("BuddyBaseTemplateTb");
 
+pub const assisting_buddy = entries[0];
+
 pub const Id = Id: {
     @setEvalBranchQuota(entries.len * 1000);
     var names: [entries.len][]const u8 = undefined;

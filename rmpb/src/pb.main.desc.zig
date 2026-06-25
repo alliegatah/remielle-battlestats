@@ -5467,13 +5467,13 @@ pub const DJDDKNONGMH = struct {
 pub const HadalZoneSceneData = struct {
     pub const second_room_avatar_id_list_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const MHDOHFPLKKO_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
-    pub const first_room_buddy_id_field_desc: FieldDesc = .{ .number = 3, .xor = 411 };
+    pub const second_room_buddy_id_field_desc: FieldDesc = .{ .number = 3, .xor = 411 };
     pub const zone_id_field_desc: FieldDesc = .{ .number = 4, .xor = 15727 };
     pub const first_room_avatar_id_list_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
     pub const ADGNECJPGDH_field_desc: FieldDesc = .{ .number = 6, .xor = 12565 };
     pub const room_index_field_desc: FieldDesc = .{ .number = 7, .xor = 10038 };
     pub const ICACKDJMEKN_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
-    pub const second_room_buddy_id_field_desc: FieldDesc = .{ .number = 9, .xor = 4025 };
+    pub const first_room_buddy_id_field_desc: FieldDesc = .{ .number = 9, .xor = 4025 };
     pub const AMHDLLHHIBN_field_desc: FieldDesc = .{ .number = 10, .xor = 3282 };
     pub const layer_item_id_field_desc: FieldDesc = .{ .number = 11, .xor = 16068 };
     pub const layer_index_field_desc: FieldDesc = .{ .number = 12, .xor = 14419 };
@@ -15326,8 +15326,8 @@ pub const ONFHINOLBNF = struct {
 pub const StartHadalZoneBattleCsReq = struct {
     pub const cmd_id: u16 = 6409;
     pub const KBMIMPGADFK_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const first_room_buddy_id_field_desc: FieldDesc = .{ .number = 6, .xor = 11240 };
-    pub const second_room_buddy_id_field_desc: FieldDesc = .{ .number = 7, .xor = 3430 };
+    pub const second_room_buddy_id_field_desc: FieldDesc = .{ .number = 6, .xor = 11240 };
+    pub const first_room_buddy_id_field_desc: FieldDesc = .{ .number = 7, .xor = 3430 };
     pub const room_index_field_desc: FieldDesc = .{ .number = 8, .xor = 16005 };
     pub const first_room_avatar_id_list_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
     pub const layer_item_id_field_desc: FieldDesc = .{ .number = 10, .xor = 9019 };

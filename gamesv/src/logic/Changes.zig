@@ -16,6 +16,7 @@ pub const init: Changes = .{
 pub const GameMode = union(enum) {
     hall: Hall,
     training: Training,
+    hadal_zone: HadalZone,
 
     /// Load hall game mode.
     pub const Hall = struct {
@@ -26,25 +27,137 @@ pub const GameMode = union(enum) {
     pub const Training = struct {
         quest: templates.training_quest.Id,
         avatars: AvatarSlot.List,
+    };
 
-        pub const AvatarSlot = enum(u32) {
-            pub const count = 3;
-            pub const List = [count]AvatarSlot;
+    /// Load hadal zone game mode.
+    pub const HadalZone = struct {
+        pub const Rooms = struct {
+            pub const count = 2;
 
-            none = 0,
-            _,
+            pub const empty: Rooms = .{
+                .avatar_lists = @splat(@splat(.none)),
+                .buddies = @splat(.none),
+            };
 
-            pub inline fn fromId(id: templates.avatar_base.Id) AvatarSlot {
-                return @enumFromInt(@intFromEnum(id));
-            }
+            avatar_lists: [count]AvatarSlot.List,
+            buddies: [count]OptionalBuddy,
+        };
 
-            pub inline fn toId(slot: AvatarSlot) ?templates.avatar_base.Id {
-                return switch (slot) {
-                    .none => null,
-                    else => |id| @enumFromInt(@intFromEnum(id)),
+        pub const Layer = struct {
+            zone_id: ZoneId,
+            room_index: u32,
+            layer_index: u32,
+
+            pub fn getId(layer: *const Layer) u32 {
+                return switch (Group.fromZoneId(layer.zone_id)) {
+                    .scheduled => switch (layer.room_index) {
+                        0 => ZoneId.scheduled.toInt() * 100 + layer.layer_index,
+                        else => ZoneId.impact.toInt() * 100 + layer.layer_index * 10 + layer.room_index,
+                    },
+                    .boss_challenge => ZoneId.boss_challenge.toInt() * 100 + layer.layer_index,
+                    .stable => @intFromEnum(layer.zone_id) * 100 + layer.layer_index,
                 };
             }
         };
+
+        rooms: Rooms,
+        layer: Layer,
+        layer_item_id: u32,
+        quest_id: u32,
+        quest_type: u32,
+
+        pub const ZoneId = enum(u32) {
+            scheduled = 62001,
+            alive_count = 61002,
+            impact = 62010,
+            boss_challenge = 69001,
+            _,
+
+            pub fn fromInt(int: u32) ?ZoneId {
+                if (Group.fromZoneIdInt(int) == null)
+                    return null;
+
+                return @enumFromInt(int);
+            }
+
+            pub inline fn toInt(id: ZoneId) u32 {
+                return @intFromEnum(id);
+            }
+        };
+
+        const Group = enum(u32) {
+            stable = 61,
+            scheduled = 62,
+            boss_challenge = 69,
+
+            pub fn fromZoneId(id: ZoneId) Group {
+                return fromZoneIdInt(@intFromEnum(id)).?;
+            }
+
+            pub fn fromZoneIdInt(int: u32) ?Group {
+                var group_num = int;
+                while ((group_num / 100) > 0) group_num /= 10;
+
+                return std.enums.fromInt(Group, group_num);
+            }
+        };
+
+        // TODO: LocalPlayType enum
+        pub fn getPlayType(hz: *const HadalZone) u32 {
+            return switch (hz.layer.zone_id) {
+                .alive_count => 222, // HADAL_ZONE_ALIVECOUNT
+                else => |zone_id| switch (Group.fromZoneId(zone_id)) {
+                    .boss_challenge => 224, // HADAL_ZONE_BOSSCHALLENGE
+                    .stable, .scheduled => switch (hz.layer.room_index) {
+                        0 => 209, // HADAL_ZONE
+                        else => 303, // HADAL_ZONE_IMPACT_BATTLE
+                    },
+                },
+            };
+        }
+
+        pub fn getEnemyPropertyScale(hz: *const HadalZone) u32 {
+            return switch (hz.getPlayType()) {
+                224 => 33,
+                303 => 61,
+                else => 19,
+            };
+        }
+    };
+
+    pub const OptionalBuddy = enum(u32) {
+        none = 0,
+        _,
+
+        pub inline fn fromId(id: templates.buddy_base.Id) OptionalBuddy {
+            return @enumFromInt(@intFromEnum(id));
+        }
+
+        pub inline fn toId(optional: OptionalBuddy) ?templates.buddy_base.Id {
+            return switch (optional) {
+                .none => null,
+                else => |id| @enumFromInt(@intFromEnum(id)),
+            };
+        }
+    };
+
+    pub const AvatarSlot = enum(u32) {
+        pub const count = 3;
+        pub const List = [count]AvatarSlot;
+
+        none = 0,
+        _,
+
+        pub inline fn fromId(id: templates.avatar_base.Id) AvatarSlot {
+            return @enumFromInt(@intFromEnum(id));
+        }
+
+        pub inline fn toId(slot: AvatarSlot) ?templates.avatar_base.Id {
+            return switch (slot) {
+                .none => null,
+                else => |id| @enumFromInt(@intFromEnum(id)),
+            };
+        }
     };
 };
 

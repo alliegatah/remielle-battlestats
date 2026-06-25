@@ -11,7 +11,7 @@ pub fn mutateHall(
             properties.hall.section_id = hall.section_id;
         },
 
-        .training => {},
+        .training, .hadal_zone => {},
     }
 }
 

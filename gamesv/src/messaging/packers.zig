@@ -106,7 +106,102 @@ pub fn packEquipmentInfo(
     };
 }
 
+pub fn packDungeonPackageInfo(
+    arena: Allocator,
+    avatar_lists: []const GameMode.AvatarSlot.List,
+    buddies: []const GameMode.OptionalBuddy,
+    avatar: *const Properties.Avatar,
+    weapon: *const Properties.Weapon,
+    equipment: *const Properties.Equipment,
+    buddy: *const Properties.Buddy,
+) !pb.DungeonPackageInfo {
+    // Always allocates `avatars.len` (which is constant), but that's okay.
+    var avatar_list: ArrayList(pb.AvatarInfo) = try .initCapacity(
+        arena,
+        GameMode.AvatarSlot.count * avatar_lists.len,
+    );
+
+    var weapon_list: ArrayList(pb.WeaponInfo) = try .initCapacity(
+        arena,
+        GameMode.AvatarSlot.count * avatar_lists.len,
+    );
+
+    var equip_list: ArrayList(pb.EquipInfo) = try .initCapacity(
+        arena,
+        Properties.Avatar.equipment_slots * GameMode.AvatarSlot.count * avatar_lists.len,
+    );
+
+    var buddy_list: ArrayList(pb.BuddyInfo) = try .initCapacity(
+        arena,
+        buddies.len,
+    );
+
+    for (avatar_lists) |slots| for (slots) |slot| if (slot.toId()) |avatar_id| {
+        const index = avatar.indexes.get(avatar_id).?;
+
+        avatar_list.appendAssumeCapacity(try packAvatarInfo(
+            arena,
+            avatar_id,
+            &avatar.meta[index],
+            avatar.weapon_uids[index],
+            avatar.equipment_uids[index],
+        ));
+
+        if (avatar.weapon_uids[index].unwrap()) |weapon_uid_int| {
+            const weapon_uid = logic.Properties.Weapon.Uid.fromInt(weapon_uid_int).?;
+            const weapon_index = std.mem.findScalar(
+                logic.Properties.Weapon.Uid,
+                &weapon.uids,
+                weapon_uid,
+            ).?;
+
+            weapon_list.appendAssumeCapacity(.{
+                .uid = weapon_uid_int,
+                .id = @intFromEnum(weapon.ids[weapon_index]),
+                .level = weapon.levels[weapon_index].toInt(),
+                .star = weapon.stars[weapon_index].toInt(),
+                .refine_level = weapon.refines[weapon_index].toInt(),
+            });
+        }
+
+        for (avatar.equipment_uids[index]) |uid| {
+            const equip_uid = logic.Properties.Equipment.Uid.fromInt(uid.unwrap() orelse continue).?;
+            const equip_index = std.mem.findScalar(
+                logic.Properties.Equipment.Uid,
+                &equipment.uids,
+                equip_uid,
+            ).?;
+
+            equip_list.appendAssumeCapacity(try packEquipmentInfo(
+                arena,
+                equip_uid,
+                equipment.ids[equip_index],
+                equipment.levels[equip_index],
+                equipment.stars[equip_index],
+                &equipment.properties[equip_index],
+            ));
+        }
+    };
+
+    for (buddies) |optional_buddy| if (optional_buddy.toId()) |buddy_id| {
+        const index = buddy.indexes.get(buddy_id).?;
+
+        buddy_list.appendAssumeCapacity(try packBuddyInfo(
+            arena,
+            buddy_id,
+            &buddy.meta[index],
+        ));
+    };
+
+    return .{
+        .avatar_list = avatar_list,
+        .weapon_list = weapon_list,
+        .equip_list = equip_list,
+    };
+}
+
 const ArrayList = std.ArrayList;
+const GameMode = logic.Changes.GameMode;
 const Avatar = Properties.Avatar;
 const Equipment = Properties.Equipment;
 const Properties = logic.Properties;

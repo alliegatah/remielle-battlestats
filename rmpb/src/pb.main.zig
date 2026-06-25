@@ -28975,7 +28975,7 @@ pub const BuddyUnitInfo = struct {
     pub const pb_desc_name = "BuddyUnitInfo";
     buddy_id: u32 = 0,
     properties: std.ArrayList(MapEntry(u32, i32)) = .empty,
-    type: ?HPKDMOOBCDA = null,
+    type: ?BuddyUnitType = null,
 };
 
 pub const AGDMCAIGLHP = struct {
@@ -33513,7 +33513,7 @@ pub const LDAJFKKMLOJ = struct {
 pub const NCPJPOAIEEJ = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "NCPJPOAIEEJ";
-    AMMJDGPPFBF: ?HPKDMOOBCDA = null,
+    AMMJDGPPFBF: ?BuddyUnitType = null,
     buddy_id: u32 = 0,
 };
 
@@ -34600,11 +34600,11 @@ pub const CHCFGLCEDFK = struct {
     GJDMOHAGMAK: std.ArrayList(MapEntry([]const u8, i32)) = .empty,
 };
 
-pub const HPKDMOOBCDA = enum(i32) {
-    HPKDMOOBCDA_GPLPNLIFIIL = 0,
-    HPKDMOOBCDA_GCLNEFAKDOG = 1,
-    HPKDMOOBCDA_MPPHEICIHED = 2,
-    HPKDMOOBCDA_BHKOLIMFGDH = 3,
+pub const BuddyUnitType = enum(i32) {
+    NONE = 0,
+    GCLNEFAKDOG = 1,
+    FIGHTING = 2,
+    ASSISTING = 3,
 };
 
 pub const EHEBMIHKPIO = struct {
