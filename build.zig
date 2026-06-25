@@ -150,6 +150,11 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("UrbanAreaMapGroupTemplateTb", "assets/filecfg/UrbanAreaMapGroupTemplateTb.zon"),
     .asset("TeleportConfigTemplateTb", "assets/filecfg/TeleportConfigTemplateTb.zon"),
     .asset("EquipmentTemplateTb", "assets/filecfg/EquipmentTemplateTb.zon"),
+
+    // Binary-packed
+    .asset("main_city_object_template_tb.remi", "assets/bincfg/main_city_object_template_tb.remi"),
+    .asset("main_city.remi", "assets/graphs/main_city.remi"),
+    .asset("interacts.remi", "assets/graphs/interacts.remi"),
 };
 
 const dpsv_assets: []const StaticAsset = &.{
