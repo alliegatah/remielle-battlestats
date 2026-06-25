@@ -11,6 +11,7 @@ pub const urban_area_map = @import("templates/urban_area_map.zig");
 pub const urban_area_map_group = @import("templates/urban_area_map_group.zig");
 pub const teleport_config = @import("templates/teleport_config.zig");
 pub const main_city_object = @import("templates/main_city_object.zig");
+pub const zone_info = @import("templates/zone_info.zig");
 
 pub const Property = struct {
     property: u32,
