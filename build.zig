@@ -130,6 +130,24 @@ pub fn build(b: *Build) void {
 
     b.installArtifact(dpsv);
     b.installArtifact(gamesv);
+
+    const serve_all_exe = b.addExecutable(.{
+        .name = "serve-all",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("build/serve-all.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    const serve_all = b.addRunArtifact(serve_all_exe);
+    serve_all.addFileArg(dpsv.getEmittedBin());
+    serve_all.addFileArg(gamesv.getEmittedBin());
+
+    b.step(
+        "serve-all",
+        "start dpsv and gamesv",
+    ).dependOn(&serve_all.step);
 }
 
 const gamesv_assets: []const StaticAsset = &.{
