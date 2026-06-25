@@ -16,6 +16,17 @@
     // If you're expecting this to change your existing inventory,
     // you should remove your `Persistent` directory.
     .starting_items = .{
+        // Override values for avatars.
+        // Each one of these fields (except id) is optional.
+        .avatar_overrides = .{
+            .{
+                .id = .sigrid,
+                .level = 60,
+                .rank = 6,
+                .talents = 1, // Also known as "mindscapes".
+            },
+        },
+
         // Weapons. Also known as "w-engines".
         .weapons = .{
             .{

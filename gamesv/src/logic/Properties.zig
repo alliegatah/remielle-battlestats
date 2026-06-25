@@ -27,6 +27,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.hall, index).* = .init;
 
     unlockAllAvatars(list, at);
+    applyAvatarOverrides(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
     addConfiguredWeapons(list, at);
@@ -58,6 +59,26 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
         avatar.weapon_uids[i] = .none;
         avatar.equipment_uids[i] = @splat(.none);
     };
+}
+
+fn applyAvatarOverrides(props: *Properties.List, at: Player) void {
+    const avatar = props.getPtr(.avatar, at.toInt());
+
+    inline for (@import("config").starting_items.avatar_overrides) |override| {
+        const Override = @TypeOf(override);
+
+        const index = avatar.indexes.get(override.id).?;
+        const meta = &avatar.meta[index];
+
+        if (@hasField(Override, "level"))
+            meta.level = @enumFromInt(override.level);
+
+        if (@hasField(Override, "rank"))
+            meta.rank = @enumFromInt(override.rank);
+
+        if (@hasField(Override, "talents"))
+            meta.talents = @enumFromInt(override.talents);
+    }
 }
 
 fn unlockAllBuddies(props: *Properties.List, at: Player) void {
@@ -107,7 +128,7 @@ fn addConfiguredWeapons(props: *Properties.List, at: Player) void {
         const i = weapon.count;
 
         weapon.uids[i] = @enumFromInt(i);
-        weapon.ids[i] = @as(templates.weapon.Id, entry.id);
+        weapon.ids[i] = entry.id;
         weapon.levels[i] = @enumFromInt(entry.level);
         weapon.stars[i] = @enumFromInt(entry.star);
         weapon.refines[i] = @enumFromInt(entry.refine);
@@ -482,6 +503,7 @@ pub fn fromPlayerSave(
     } else {
         props.getPtr(.avatar, index).* = .init;
         unlockAllAvatars(props, player);
+        applyAvatarOverrides(props, player);
     }
 
     if (save.buddy) |buddy_save| {
