@@ -853,9 +853,9 @@ pub const DAPKIMCNIKF = struct {
 };
 
 pub const EntranceType = enum(i32) {
-    EntranceType_DKFFCHJMNNN = 0,
-    EntranceType_FEIIHBGPBDK = 1,
-    EntranceType_JFHJJHBPKBA = 2,
+    NONE = 0,
+    CONSTANT = 1,
+    SCHEDULED = 2,
 };
 
 pub const ADGBDAEOLFP = struct {
