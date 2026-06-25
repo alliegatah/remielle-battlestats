@@ -25,7 +25,6 @@ pub fn switchGameMode(
                     .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
                     .npc_list = npc_list: {
                         const main_city = &assets.graphs.main_city;
-                        const objects_template = &assets.configs.main_city_object;
 
                         const section_index = std.mem.findScalar(
                             u32,
@@ -41,7 +40,7 @@ pub fn switchGameMode(
                         for (main_city.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
                             .create_npc => {
                                 const create_npc = action.data.create_npc;
-                                const tmpl_index = objects_template.tag_ids.getIndex(create_npc.tag_id) orelse
+                                const tmpl_index = assets.main_city_object_map.getIndex(create_npc.tag_id) orelse
                                     continue;
 
                                 try npc_id_list.append(notify.allocator, create_npc.tag_id);
@@ -51,18 +50,18 @@ pub fn switchGameMode(
                                     .is_active = true,
                                 };
 
-                                if (objects_template.default_interact_ids[tmpl_index] != 0) {
-                                    const name = objects_template.interact_names[tmpl_index];
+                                if (templates.main_city_object.default_interact_ids[tmpl_index] != 0) {
+                                    const name = templates.main_city_object.interact_names[tmpl_index];
 
                                     try npc_info.interacts_info.append(notify.allocator, .{
-                                        .key = objects_template.default_interact_ids[tmpl_index],
+                                        .key = templates.main_city_object.default_interact_ids[tmpl_index],
                                         .value = .{
                                             .tag_id = @intCast(create_npc.tag_id),
                                             .interact_target_list = .fromOwnedSlice(
                                                 // constCast: this list won't be modified.
                                                 @constCast(default_interact_target_list),
                                             ),
-                                            .name = objects_template.getString(name),
+                                            .name = templates.main_city_object.getString(name),
                                             .scale_x = 1,
                                             .scale_y = 1,
                                             .scale_z = 1,
@@ -82,10 +81,10 @@ pub fn switchGameMode(
                                     change_interact.tag_id,
                                 ) orelse continue;
 
-                                const tmpl_index = objects_template.tag_ids.getIndex(change_interact.tag_id) orelse
+                                const tmpl_index = assets.main_city_object_map.getIndex(change_interact.tag_id) orelse
                                     continue;
 
-                                const name = objects_template.interact_names[tmpl_index];
+                                const name = templates.main_city_object.interact_names[tmpl_index];
 
                                 // Clobber existing interact, if any.
                                 npc_list.items[npc_index].interacts_info.items.len = 0;
@@ -98,7 +97,7 @@ pub fn switchGameMode(
                                             // constCast: this list won't be modified.
                                             @constCast(default_interact_target_list),
                                         ),
-                                        .name = objects_template.getString(name),
+                                        .name = templates.main_city_object.getString(name),
                                         .scale_x = 1,
                                         .scale_y = 1,
                                         .scale_z = 1,

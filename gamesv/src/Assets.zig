@@ -1,9 +1,8 @@
 pub const templates = @import("Assets/templates.zig");
 pub const Graphs = @import("Assets/Graphs.zig");
-pub const BinConfigs = @import("Assets/BinConfigs.zig");
 
 graphs: Graphs,
-configs: BinConfigs,
+main_city_object_map: templates.main_city_object.Map,
 arena: ArenaAllocator,
 
 pub fn load(io: std.Io, gpa: std.mem.Allocator) !Assets {
@@ -12,7 +11,7 @@ pub fn load(io: std.Io, gpa: std.mem.Allocator) !Assets {
 
     return .{
         .graphs = try Graphs.load(io, arena.allocator()),
-        .configs = try BinConfigs.load(io, arena.allocator()),
+        .main_city_object_map = try templates.main_city_object.createMap(arena.allocator()),
         .arena = arena,
     };
 }
