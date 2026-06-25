@@ -102,7 +102,7 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
 fn addConfiguredEquipment(props: *Properties.List, at: Player) void {
     const equip: *Properties.Equipment = props.getPtr(.equip, at.toInt());
 
-    inline for (@import("config").starting_equipment) |entry| {
+    inline for (@import("config").starting_items.equipment) |entry| {
         defer equip.count += 1;
         const i = equip.count;
 
