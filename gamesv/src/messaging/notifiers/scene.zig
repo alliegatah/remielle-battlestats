@@ -24,11 +24,9 @@ pub fn switchGameMode(
                     .control_avatar_id = properties.basic_info.control_avatar.toInt(),
                     .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
                     .npc_list = npc_list: {
-                        const main_city = &assets.graphs.main_city;
-
                         const section_index = std.mem.findScalar(
                             u32,
-                            main_city.sections,
+                            main_city.section_ids,
                             @intFromEnum(hall.section_id),
                         ) orelse break :npc_list .empty;
 
@@ -202,7 +200,6 @@ pub fn switchGameMode(
 }
 
 pub fn npcInteraction(
-    assets: *const Assets,
     properties: Properties.Immutable(.{
         Properties.Hall,
     }),
@@ -213,7 +210,7 @@ pub fn npcInteraction(
 ) !void {
     var action_list: ArrayList(pb.ActionInfo) = .empty;
 
-    const interacts = &assets.graphs.interacts;
+    const interacts = Assets.graphs.interacts;
     const event = &interacts.events[changes.npc_interaction.?.interact_index];
 
     for (interacts.actions[event.actions_begin..event.actions_end]) |*action| switch (action.tag) {
@@ -260,6 +257,8 @@ const templates = Assets.templates;
 
 const Notify = notifiers.Notify;
 const ArrayList = std.ArrayList;
+
+const main_city = Assets.graphs.main_city;
 
 const logic = @import("../../logic.zig");
 const Assets = @import("../../Assets.zig");

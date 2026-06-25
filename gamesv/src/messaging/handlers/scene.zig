@@ -61,7 +61,6 @@ pub fn enterSection(
 }
 
 pub fn interactWithUnit(
-    assets: *const Assets,
     message: Message(pb.InteractWithUnitCsReq),
     changes: Changes.Builder(.{
         Changes.NpcInteraction,
@@ -71,7 +70,7 @@ pub fn interactWithUnit(
     const interaction: Changes.NpcInteraction = .{
         .interact_index = @intCast(std.mem.findScalar(
             u32,
-            assets.graphs.interacts.ids,
+            Assets.graphs.interacts.ids,
             @bitCast(message.data.interact_id),
         ) orelse
             return response.fail(1)),

@@ -1,26 +1,19 @@
 pub const templates = @import("Assets/templates.zig");
-pub const Graphs = @import("Assets/Graphs.zig");
+pub const graphs = @import("Assets/graphs.zig");
 
-graphs: Graphs,
 main_city_object_map: templates.main_city_object.Map,
-arena: ArenaAllocator,
 
-pub fn load(io: std.Io, gpa: std.mem.Allocator) !Assets {
-    var arena: ArenaAllocator = .init(gpa);
-    errdefer arena.deinit();
-
+pub fn init(gpa: Allocator) !Assets {
     return .{
-        .graphs = try Graphs.load(io, arena.allocator()),
-        .main_city_object_map = try templates.main_city_object.createMap(arena.allocator()),
-        .arena = arena,
+        .main_city_object_map = try templates.main_city_object.createMap(gpa),
     };
 }
 
-pub fn deinit(assets: *Assets) void {
-    assets.arena.deinit();
+pub fn deinit(assets: *Assets, gpa: Allocator) void {
+    assets.main_city_object_map.deinit(gpa);
 }
 
-const ArenaAllocator = std.heap.ArenaAllocator;
+const Allocator = std.mem.Allocator;
 
 const std = @import("std");
 const Assets = @This();

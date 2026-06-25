@@ -63,10 +63,11 @@ pub fn main(init: Init.Minimal) void {
         else => |limit| .limited64(limit),
     };
 
-    var assets = Assets.load(io, gpa) catch |err|
-        fatal("failed to load assets: {t}", .{err});
+    var assets = Assets.init(gpa) catch |err| switch (err) {
+        error.OutOfMemory => fatal("out of memory", .{}),
+    };
 
-    defer assets.deinit();
+    defer assets.deinit(gpa);
 
     const bind_args = .{ io, gpa, csprng, &assets, &bind_address, concurrent_sessions_limit };
 
