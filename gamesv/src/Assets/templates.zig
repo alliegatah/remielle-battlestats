@@ -7,11 +7,14 @@ pub const section_config = @import("templates/section_config.zig");
 pub const yorozuya_level = @import("templates/yorozuya_level.zig");
 pub const training_quest = @import("templates/training_quest.zig");
 pub const weapon = @import("templates/weapon.zig");
+pub const equipment = @import("templates/equipment.zig");
 pub const urban_area_map = @import("templates/urban_area_map.zig");
 pub const urban_area_map_group = @import("templates/urban_area_map_group.zig");
 pub const teleport_config = @import("templates/teleport_config.zig");
 pub const main_city_object = @import("templates/main_city_object.zig");
 pub const zone_info = @import("templates/zone_info.zig");
+pub const quest_config = @import("templates/quest_config.zig");
+pub const hadal_zone_quest = @import("templates/hadal_zone_quest.zig");
 
 pub const Property = struct {
     property: u32,
@@ -22,5 +25,3 @@ pub const ItemCount = struct {
     item_id: u32,
     number: u32,
 };
-
-pub const equipment = @import("templates/equipment.zig");
