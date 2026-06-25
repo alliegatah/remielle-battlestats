@@ -29,6 +29,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     unlockAllAvatars(list, at);
     unlockAllBuddies(list, at);
     unlockAllWeapons(list, at);
+    addConfiguredWeapons(list, at);
     addConfiguredEquipment(list, at);
 }
 
@@ -95,6 +96,21 @@ fn unlockAllWeapons(props: *Properties.List, at: Player) void {
         weapon.levels[i] = .max;
         weapon.stars[i] = .max;
         weapon.refines[i] = .max;
+    }
+}
+
+fn addConfiguredWeapons(props: *Properties.List, at: Player) void {
+    const weapon = props.getPtr(.weapon, at.toInt());
+
+    inline for (@import("config").starting_items.weapons) |entry| {
+        defer weapon.count += 1;
+        const i = weapon.count;
+
+        weapon.uids[i] = @enumFromInt(i);
+        weapon.ids[i] = @as(templates.weapon.Id, entry.id);
+        weapon.levels[i] = @enumFromInt(entry.level);
+        weapon.stars[i] = @enumFromInt(entry.star);
+        weapon.refines[i] = @enumFromInt(entry.refine);
     }
 }
 
@@ -516,6 +532,7 @@ pub fn fromPlayerSave(
     } else {
         props.getPtr(.weapon, index).* = .init;
         unlockAllWeapons(props, player);
+        addConfiguredWeapons(props, player);
     }
 
     if (save.equip) |equip_save| {
