@@ -1,0 +1,197 @@
+.{
+    .{
+        .rarity = 2,
+        .level = 0,
+        .property_rate = 0,
+    },
+    .{
+        .rarity = 2,
+        .level = 1,
+        .property_rate = 3333,
+    },
+    .{
+        .rarity = 2,
+        .level = 2,
+        .property_rate = 6667,
+    },
+    .{
+        .rarity = 2,
+        .level = 3,
+        .property_rate = 10000,
+    },
+    .{
+        .rarity = 2,
+        .level = 4,
+        .property_rate = 13333,
+    },
+    .{
+        .rarity = 2,
+        .level = 5,
+        .property_rate = 16667,
+    },
+    .{
+        .rarity = 2,
+        .level = 6,
+        .property_rate = 20000,
+    },
+    .{
+        .rarity = 2,
+        .level = 7,
+        .property_rate = 23333,
+    },
+    .{
+        .rarity = 2,
+        .level = 8,
+        .property_rate = 26667,
+    },
+    .{
+        .rarity = 2,
+        .level = 9,
+        .property_rate = 30000,
+    },
+    .{
+        .rarity = 3,
+        .level = 0,
+        .property_rate = 0,
+    },
+    .{
+        .rarity = 3,
+        .level = 1,
+        .property_rate = 2500,
+    },
+    .{
+        .rarity = 3,
+        .level = 2,
+        .property_rate = 5000,
+    },
+    .{
+        .rarity = 3,
+        .level = 3,
+        .property_rate = 7500,
+    },
+    .{
+        .rarity = 3,
+        .level = 4,
+        .property_rate = 10000,
+    },
+    .{
+        .rarity = 3,
+        .level = 5,
+        .property_rate = 12500,
+    },
+    .{
+        .rarity = 3,
+        .level = 6,
+        .property_rate = 15000,
+    },
+    .{
+        .rarity = 3,
+        .level = 7,
+        .property_rate = 17500,
+    },
+    .{
+        .rarity = 3,
+        .level = 8,
+        .property_rate = 20000,
+    },
+    .{
+        .rarity = 3,
+        .level = 9,
+        .property_rate = 22500,
+    },
+    .{
+        .rarity = 3,
+        .level = 10,
+        .property_rate = 25000,
+    },
+    .{
+        .rarity = 3,
+        .level = 11,
+        .property_rate = 27500,
+    },
+    .{
+        .rarity = 3,
+        .level = 12,
+        .property_rate = 30000,
+    },
+    .{
+        .rarity = 4,
+        .level = 0,
+        .property_rate = 0,
+    },
+    .{
+        .rarity = 4,
+        .level = 1,
+        .property_rate = 2000,
+    },
+    .{
+        .rarity = 4,
+        .level = 2,
+        .property_rate = 4000,
+    },
+    .{
+        .rarity = 4,
+        .level = 3,
+        .property_rate = 6000,
+    },
+    .{
+        .rarity = 4,
+        .level = 4,
+        .property_rate = 8000,
+    },
+    .{
+        .rarity = 4,
+        .level = 5,
+        .property_rate = 10000,
+    },
+    .{
+        .rarity = 4,
+        .level = 6,
+        .property_rate = 12000,
+    },
+    .{
+        .rarity = 4,
+        .level = 7,
+        .property_rate = 14000,
+    },
+    .{
+        .rarity = 4,
+        .level = 8,
+        .property_rate = 16000,
+    },
+    .{
+        .rarity = 4,
+        .level = 9,
+        .property_rate = 18000,
+    },
+    .{
+        .rarity = 4,
+        .level = 10,
+        .property_rate = 20000,
+    },
+    .{
+        .rarity = 4,
+        .level = 11,
+        .property_rate = 22000,
+    },
+    .{
+        .rarity = 4,
+        .level = 12,
+        .property_rate = 24000,
+    },
+    .{
+        .rarity = 4,
+        .level = 13,
+        .property_rate = 26000,
+    },
+    .{
+        .rarity = 4,
+        .level = 14,
+        .property_rate = 28000,
+    },
+    .{
+        .rarity = 4,
+        .level = 15,
+        .property_rate = 30000,
+    },
+}

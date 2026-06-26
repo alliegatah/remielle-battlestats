@@ -171,6 +171,13 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("ZoneInfoTemplateTb", "assets/filecfg/ZoneInfoTemplateTb.zon"),
     .asset("QuestConfigTemplateTb", "assets/filecfg/QuestConfigTemplateTb.zon"),
     .asset("HadalZoneQuestTemplateTb", "assets/filecfg/HadalZoneQuestTemplateTb.zon"),
+    .asset("AvatarBattleTemplateTb", "assets/filecfg/AvatarBattleTemplateTb.zon"),
+    .asset("AvatarLevelAdvanceTemplateTb", "assets/filecfg/AvatarLevelAdvanceTemplateTb.zon"),
+    .asset("AvatarPassiveSkillTemplateTb", "assets/filecfg/AvatarPassiveSkillTemplateTb.zon"),
+    .asset("WeaponLevelTemplateTb", "assets/filecfg/WeaponLevelTemplateTb.zon"),
+    .asset("WeaponStarTemplateTb", "assets/filecfg/WeaponStarTemplateTb.zon"),
+    .asset("EquipmentLevelTemplateTb", "assets/filecfg/EquipmentLevelTemplateTb.zon"),
+    .asset("EquipmentSuitTemplateTb", "assets/filecfg/EquipmentSuitTemplateTb.zon"),
 
     // Binary-packed
     .asset("main_city_object_template_tb.remi", "assets/bincfg/main_city_object_template_tb.remi"),

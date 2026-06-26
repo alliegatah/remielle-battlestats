@@ -15,6 +15,13 @@ pub const main_city_object = @import("templates/main_city_object.zig");
 pub const zone_info = @import("templates/zone_info.zig");
 pub const quest_config = @import("templates/quest_config.zig");
 pub const hadal_zone_quest = @import("templates/hadal_zone_quest.zig");
+pub const avatar_level_advance = @import("templates/avatar_level_advance.zig");
+pub const avatar_passive_skill = @import("templates/avatar_passive_skill.zig");
+pub const weapon_level = @import("templates/weapon_level.zig");
+pub const weapon_star = @import("templates/weapon_star.zig");
+pub const equipment_level = @import("templates/equipment_level.zig");
+pub const equipment_suit = @import("templates/equipment_suit.zig");
+pub const avatar_battle = @import("templates/avatar_battle.zig");
 
 pub const Property = struct {
     property: u32,
