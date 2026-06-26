@@ -319,6 +319,70 @@ pub fn equipmentDress(
     response.set(.init);
 }
 
+pub fn equipmentSuitDress(
+    message: Message(pb.EquipmentSuitDressCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+        Properties.Equipment,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.EquipmentSuitDressScRsp),
+) !void {
+    const index: u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    } orelse return response.fail(1);
+
+    const params = message.data.param_list.items;
+
+    switch (params.len) {
+        1...Properties.Avatar.equipment_slots => {},
+        else => return response.fail(1),
+    }
+
+    const equipments = @as(
+        [*]const Properties.Avatar.OptionalUID,
+        @ptrCast(&properties.avatar.equipment_uids),
+    )[0 .. properties.avatar.count() * Avatar.equipment_slots];
+
+    const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+
+    avatars[0] = .{
+        .id = properties.avatar.ids[index],
+        .meta = properties.avatar.meta[index],
+        .weapon_uid = properties.avatar.weapon_uids[index],
+        .equipment_uids = properties.avatar.equipment_uids[index],
+        .awake_material_count = properties.avatar.awake_material_counts[index],
+    };
+
+    for (params) |param| {
+        const slot = Properties.Equipment.Slot.fromInt(param.dress_index) orelse
+            return response.fail(1);
+
+        const uid = Properties.Equipment.Uid.fromInt(param.equip_uid) orelse
+            return response.fail(1);
+
+        if (std.mem.findScalar(Properties.Equipment.Uid, &properties.equip.uids, uid) == null)
+            return response.fail(1);
+
+        if (std.mem.findScalar(
+            Properties.Avatar.OptionalUID,
+            equipments,
+            @enumFromInt(param.equip_uid),
+        ) != null)
+            return response.fail(1); // EquipmentSuitDressCsReq requests only unused equipment.
+
+        avatars[0].equipment_uids[slot.toIndex()] = @enumFromInt(param.equip_uid);
+    }
+
+    changes.insert(avatars);
+    response.set(.init);
+}
+
 pub fn equipmentUnDress(
     message: Message(pb.EquipmentUnDressCsReq),
     properties: Properties.Immutable(.{

@@ -3750,6 +3750,12 @@ pub const EquipmentSuitDressCsReq = struct {
     param_list: std.ArrayList(EquipmentDressParam) = .empty,
 };
 
+pub const EquipmentSuitDressScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "EquipmentSuitDressScRsp";
+    retcode: i32 = 0,
+};
+
 pub const PHJGPAABMAK = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PHJGPAABMAK";
