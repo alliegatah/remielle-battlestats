@@ -111,6 +111,46 @@ pub fn deinit(rio: *RemiellIo) void {
     rio.arena.deinit();
 }
 
+/// Treats `Io.Group` as a DoublyLinkedList.
+/// Avoids internal allocations for group coroutine tracking.
+const Group = struct {
+    /// ptr.token is treated as linked list head
+    /// ptr.state is treated as linked list tail
+    ptr: *Io.Group,
+
+    pub fn append(g: Group, coro: *Coroutine) void {
+        if (g.ptr.state != 0) {
+            const tail: *DoublyLinkedList.Node = @ptrFromInt(g.ptr.state);
+            tail.next = &coro.list_node;
+            coro.list_node.prev = tail;
+            coro.list_node.next = null;
+            g.ptr.state = @intFromPtr(&coro.list_node);
+        } else { // empty
+            g.ptr.token.raw = &coro.list_node;
+            g.ptr.state = @intFromPtr(&coro.list_node);
+            coro.list_node.prev = null;
+            coro.list_node.next = null;
+        }
+    }
+
+    pub fn remove(g: Group, coro: *Coroutine) void {
+        if (coro.list_node.prev) |prev|
+            prev.next = coro.list_node.next
+        else
+            g.ptr.token.raw = coro.list_node.next;
+
+        if (coro.list_node.next) |next|
+            next.prev = coro.list_node.prev
+        else
+            g.ptr.state = @intFromPtr(coro.list_node.prev);
+    }
+
+    pub fn peek(g: Group) ?*Coroutine {
+        const node: *DoublyLinkedList.Node = @ptrCast(@alignCast(g.ptr.token.raw orelse return null));
+        return @fieldParentPtr("list_node", node);
+    }
+};
+
 const Coroutine = struct {
     buffer: []u8,
     scheduling: union(enum) {
@@ -120,13 +160,13 @@ const Coroutine = struct {
         },
         grouped: struct {
             start: *const fn (context: *const anyopaque) void,
-            group_ptr: *Io.Group,
+            group: Group,
         },
     },
     context_ptr: *const anyopaque,
     state: State,
     cancel_protection: Io.CancelProtection,
-    list_node: SinglyLinkedList.Node,
+    list_node: DoublyLinkedList.Node,
     wait_point: WaitPoint,
     rio: *RemiellIo,
     awaiter: ?Awaiter,
@@ -146,7 +186,7 @@ const Coroutine = struct {
     const Storage = struct {
         limit: Io.Limit,
         stack_size: usize,
-        free_list: SinglyLinkedList,
+        free_list: DoublyLinkedList,
 
         pub fn init(limit: Io.Limit, stack_size: usize) Storage {
             return .{
@@ -211,15 +251,7 @@ const Coroutine = struct {
                     grouped.start(coro.context_ptr);
 
                     // Done. We can recycle self immediately.
-
-                    const next_group_coro: ?*Coroutine = if (coro.list_node.next) |node|
-                        @alignCast(@fieldParentPtr("list_node", node))
-                    else
-                        null;
-
-                    coro.list_node.next = null;
-                    grouped.group_ptr.token.store(next_group_coro, .monotonic);
-
+                    grouped.group.remove(coro);
                     rio.coro_storage.recycle(coro);
                 },
             }
@@ -479,6 +511,7 @@ fn groupConcurrent(
     start: *const fn (*const anyopaque) void,
 ) Io.ConcurrentError!void {
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const group: Group = .{ .ptr = g };
 
     const coro = rio.coro_storage.allocate(rio.arena.allocator()) catch |err| switch (err) {
         error.OutOfMemory, error.LimitExceeded => return error.ConcurrencyUnavailable,
@@ -504,7 +537,7 @@ fn groupConcurrent(
 
     coro.scheduling = .{ .grouped = .{
         .start = start,
-        .group_ptr = g,
+        .group = group,
     } };
 
     coro.context_ptr = owned_context_ptr;
@@ -527,15 +560,7 @@ fn groupConcurrent(
     @memcpy(stack_pointer[0..8], std.mem.asBytes(&coro));
 
     rio.schedule(&coro.wait_point);
-
-    if (g.token.load(.monotonic)) |token| {
-        const last_group_coro: *Coroutine = @ptrCast(@alignCast(token));
-        coro.list_node.next = &last_group_coro.list_node;
-        g.token.store(coro, .monotonic);
-    } else {
-        coro.list_node.next = null;
-        g.token.store(coro, .monotonic);
-    }
+    group.append(coro);
 }
 
 fn groupCancel(
@@ -544,11 +569,10 @@ fn groupCancel(
     _: *anyopaque,
 ) void {
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const group: Group = .{ .ptr = g };
 
-    while (g.token.raw) |token| {
-        const coroutine: *Coroutine = @ptrCast(@alignCast(token));
-        rio.cancelAndWait(coroutine);
-    }
+    while (group.peek()) |coro|
+        rio.cancelAndWait(coro);
 }
 
 fn recancel(userdata: ?*anyopaque) void {
@@ -1482,7 +1506,6 @@ const abort = std.process.abort;
 
 const Io = std.Io;
 const Allocator = std.mem.Allocator;
-const SinglyLinkedList = std.SinglyLinkedList;
 const DoublyLinkedList = std.DoublyLinkedList;
 const DefaultCsprng = std.Random.DefaultCsprng;
 
