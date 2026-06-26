@@ -67,6 +67,9 @@ pub fn packAvatarInfo(
         .dressed_equip_list = dressed_equip_list,
         .is_favorite = meta.flags.favorite,
         .avatar_skin_id = meta.skin.toInt(),
+        .awake_id = meta.awakening.toInt(),
+        .is_awake_available = meta.flags.awake_available,
+        .is_awake_enabled = meta.flags.awake_enabled,
     };
 }
 

@@ -59,6 +59,7 @@ pub fn avatarFavorite(
             .meta = meta,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
+            .awake_material_count = properties.avatar.awake_material_counts[index],
         };
 
         changes.insert(avatars);
@@ -99,6 +100,7 @@ pub fn avatarSkinDress(
             .meta = meta,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
+            .awake_material_count = properties.avatar.awake_material_counts[index],
         };
 
         changes.insert(avatars);
@@ -139,6 +141,7 @@ pub fn avatarSkinUnDress(
             .meta = meta,
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[index],
+            .awake_material_count = properties.avatar.awake_material_counts[index],
         };
 
         changes.insert(avatars);
@@ -184,6 +187,7 @@ pub fn weaponDress(
         .meta = properties.avatar.meta[index],
         .weapon_uid = @enumFromInt(weapon_uid.toInt()),
         .equipment_uids = properties.avatar.equipment_uids[index],
+        .awake_material_count = properties.avatar.awake_material_counts[index],
     };
 
     var changes_count: usize = 1;
@@ -201,6 +205,7 @@ pub fn weaponDress(
             .meta = properties.avatar.meta[prev_owner_index],
             .weapon_uid = properties.avatar.weapon_uids[index],
             .equipment_uids = properties.avatar.equipment_uids[prev_owner_index],
+            .awake_material_count = properties.avatar.awake_material_counts[prev_owner_index],
         };
     }
 
@@ -235,6 +240,7 @@ pub fn weaponUnDress(
         .meta = properties.avatar.meta[index],
         .weapon_uid = .none, // undress
         .equipment_uids = properties.avatar.equipment_uids[index],
+        .awake_material_count = properties.avatar.awake_material_counts[index],
     };
 
     changes.insert(avatars);
@@ -275,6 +281,7 @@ pub fn equipmentDress(
         .meta = properties.avatar.meta[index],
         .weapon_uid = properties.avatar.weapon_uids[index],
         .equipment_uids = equipment_uids,
+        .awake_material_count = properties.avatar.awake_material_counts[index],
     };
 
     var changes_count: usize = 1;
@@ -304,6 +311,7 @@ pub fn equipmentDress(
             .meta = properties.avatar.meta[avatar_idx],
             .weapon_uid = properties.avatar.weapon_uids[avatar_idx],
             .equipment_uids = prev_owner_equipments_uids,
+            .awake_material_count = properties.avatar.awake_material_counts[avatar_idx],
         };
     }
 
@@ -344,9 +352,108 @@ pub fn equipmentUnDress(
         .meta = properties.avatar.meta[index],
         .weapon_uid = properties.avatar.weapon_uids[index],
         .equipment_uids = equipment_uids,
+        .awake_material_count = properties.avatar.awake_material_counts[index],
     };
 
     changes.insert(avatars);
+    response.set(.init);
+}
+
+pub fn avatarUnlockAwake(
+    message: Message(pb.AvatarUnlockAwakeCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.AvatarUnlockAwakeScRsp),
+) !void {
+    const maybe_index: ?u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    };
+
+    const index = maybe_index orelse
+        return response.fail(1);
+
+    const avatar_awake_material_count = properties.avatar.awake_material_counts[index];
+    if (avatar_awake_material_count == .none or avatar_awake_material_count.toInt() == 0) {
+        return response.fail(1);
+    }
+
+    var meta = properties.avatar.meta[index];
+
+    for (templates.avatar_special_awaken.entries) |template| if (template.avatar_id == message.data.avatar_id) {
+        if (template.id > meta.awakening.toInt()) {
+            if (meta.awakening == .none) {
+                meta.flags.awake_available = true;
+                meta.flags.awake_enabled = true;
+            }
+            meta.awakening = @enumFromInt(template.id);
+
+            const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+            avatars[0] = .{
+                .id = properties.avatar.ids[index],
+                .meta = meta,
+                .weapon_uid = properties.avatar.weapon_uids[index],
+                .equipment_uids = properties.avatar.equipment_uids[index],
+                .awake_material_count = @enumFromInt(avatar_awake_material_count.toInt() - 1),
+            };
+
+            changes.insert(avatars);
+            break;
+        }
+    };
+
+    if (meta.awakening == .none) {
+        return response.fail(1);
+    }
+
+    response.set(.init);
+}
+
+pub fn avatarSetAwake(
+    message: Message(pb.AvatarSetAwakeCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.AvatarSetAwakeScRsp),
+) !void {
+    const maybe_index: ?u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    };
+
+    const index = maybe_index orelse
+        return response.fail(1);
+
+    var meta = properties.avatar.meta[index];
+    if (meta.awakening == .none) {
+        return response.fail(1);
+    }
+
+    if (meta.flags.awake_enabled != message.data.is_awake_enabled) {
+        meta.flags.awake_enabled = message.data.is_awake_enabled;
+
+        const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+        avatars[0] = .{
+            .id = properties.avatar.ids[index],
+            .meta = meta,
+            .weapon_uid = properties.avatar.weapon_uids[index],
+            .equipment_uids = properties.avatar.equipment_uids[index],
+            .awake_material_count = properties.avatar.awake_material_counts[index],
+        };
+        changes.insert(avatars);
+    }
+
     response.set(.init);
 }
 

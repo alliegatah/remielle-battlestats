@@ -182,6 +182,7 @@ pub const Avatar = struct {
     meta: Properties.Avatar.Meta,
     weapon_uid: Properties.Avatar.OptionalUID,
     equipment_uids: [Properties.Avatar.equipment_slots]Properties.Avatar.OptionalUID,
+    awake_material_count: Properties.Avatar.Awakening.Material,
 };
 
 pub const subset_marker_name = "logic_changes_subset_marker";

@@ -56,6 +56,9 @@ pub fn getEquipData(
 
 pub fn getItemData(
     message: Message(pb.GetItemDataCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
     response: Response(pb.GetItemDataScRsp),
 ) !void {
     _ = message;
@@ -67,6 +70,15 @@ pub fn getItemData(
 
     for (templates.avatar_skin_base.entries) |entry|
         materials.appendAssumeCapacity(.{ .id = entry.id, .count = 1 });
+
+    const avatar_count = properties.avatar.count();
+    const awake_material_counts = properties.avatar.awake_material_counts[0..avatar_count];
+    for (awake_material_counts, 0..) |awake_material_count, index| if (awake_material_count != .none) {
+        try materials.append(response.allocator, .{
+            .id = 20_000 + @divFloor(@intFromEnum(properties.avatar.ids[index]), 10),
+            .count = awake_material_count.toInt(),
+        });
+    };
 
     response.set(.{
         .material_list = materials,

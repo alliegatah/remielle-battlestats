@@ -113,8 +113,12 @@ pub const AvatarItemSave = struct {
     favorite: bool = false,
     skill_levels: std.ArrayList(u32) = .empty,
     skin_id: u32 = 0,
+    awake_available: bool = false,
+    awake_enabled: bool = false,
+    awake_id: u32 = 0,
     weapon_uid: u32 = 0,
     equipment_uids: std.ArrayList(u32) = .empty,
+    awake_material_count: u32 = 0,
     pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const level_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const exp_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
@@ -124,8 +128,12 @@ pub const AvatarItemSave = struct {
     pub const favorite_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
     pub const skill_levels_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
     pub const skin_id_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
+    pub const awake_available_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
+    pub const awake_enabled_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
+    pub const awake_id_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const weapon_uid_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
     pub const equipment_uids_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
+    pub const awake_material_count_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
 };
 
 pub const WeaponSave = struct {
@@ -224,3 +232,4 @@ pub const MainCityTimeSave = struct {
     pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
+

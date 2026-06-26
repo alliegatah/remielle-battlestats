@@ -178,6 +178,7 @@ const gamesv_assets: []const StaticAsset = &.{
     .asset("WeaponStarTemplateTb", "assets/filecfg/WeaponStarTemplateTb.zon"),
     .asset("EquipmentLevelTemplateTb", "assets/filecfg/EquipmentLevelTemplateTb.zon"),
     .asset("EquipmentSuitTemplateTb", "assets/filecfg/EquipmentSuitTemplateTb.zon"),
+    .asset("AvatarSpecialAwakenTemplateTb", "assets/filecfg/AvatarSpecialAwakenTemplateTb.zon"),
 
     // Binary-packed
     .asset("main_city_object_template_tb.remi", "assets/bincfg/main_city_object_template_tb.remi"),

@@ -12,6 +12,7 @@ pub fn mutateAvatar(
         properties.avatar.meta[index] = change.meta;
         properties.avatar.weapon_uids[index] = change.weapon_uid;
         properties.avatar.equipment_uids[index] = change.equipment_uids;
+        properties.avatar.awake_material_counts[index] = change.awake_material_count;
     }
 }
 

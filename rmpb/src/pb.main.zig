@@ -33871,6 +33871,12 @@ pub const AvatarSetAwakeCsReq = struct {
     awake_id: u32 = 0,
 };
 
+pub const AvatarSetAwakeScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "AvatarSetAwakeScRsp";
+    retcode: i32 = 0,
+};
+
 pub const HIJCKFLFMLM = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "HIJCKFLFMLM";
@@ -38898,6 +38904,12 @@ pub const AvatarUnlockAwakeCsReq = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "AvatarUnlockAwakeCsReq";
     avatar_id: u32 = 0,
+};
+
+pub const AvatarUnlockAwakeScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "AvatarUnlockAwakeScRsp";
+    retcode: i32 = 0,
 };
 
 pub const OPICJPDBIEB = struct {

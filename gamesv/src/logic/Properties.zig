@@ -53,6 +53,7 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
             .flags = .init,
             .skill_levels = undefined,
             .skin = .none,
+            .awakening = .none,
         };
 
         inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_type|
@@ -60,7 +61,21 @@ fn unlockAllAvatars(props: *Properties.List, at: Player) void {
 
         avatar.weapon_uids[i] = .none;
         avatar.equipment_uids[i] = @splat(.none);
+        avatar.awake_material_counts[i] = .none;
     };
+
+    for (templates.avatar_special_awaken.entries) |template| {
+        const maybe_index: ?u32 = avatar_index: {
+            const id = std.enums.fromInt(Properties.Avatar.Id, template.avatar_id) orelse
+                break :avatar_index null;
+
+            break :avatar_index avatar.indexes.get(id);
+        };
+
+        const index = maybe_index orelse continue;
+
+        avatar.awake_material_counts[index] = .add(avatar.awake_material_counts[index], 1);
+    }
 }
 
 fn applyAvatarOverrides(props: *Properties.List, at: Player) void {
@@ -80,6 +95,12 @@ fn applyAvatarOverrides(props: *Properties.List, at: Player) void {
 
         if (@hasField(Override, "talents"))
             meta.talents = @enumFromInt(override.talents);
+
+        if (@hasField(Override, "awakening")) {
+            meta.awakening = @enumFromInt(override.awakening);
+            meta.flags.awake_available = true;
+            meta.flags.awake_enabled = true;
+        }
     }
 }
 
@@ -383,7 +404,8 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         avatar.meta[0..avatar_count],
         avatar.weapon_uids[0..avatar_count],
         avatar.equipment_uids[0..avatar_count],
-    ) |id, *meta, weapon_uid, *equipment_uids| {
+        avatar.awake_material_counts[0..avatar_count],
+    ) |id, *meta, weapon_uid, *equipment_uids, awake_material_count| {
         var skill_levels: std.ArrayList(u32) = try .initCapacity(arena, Avatar.Skill.count);
 
         for (meta.skill_levels) |level|
@@ -399,8 +421,12 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
             .favorite = meta.flags.favorite,
             .skill_levels = skill_levels,
             .skin_id = meta.skin.toInt(),
+            .awake_available = meta.flags.awake_available,
+            .awake_enabled = meta.flags.awake_enabled,
+            .awake_id = meta.awakening.toInt(),
             .weapon_uid = @intFromEnum(weapon_uid),
             .equipment_uids = .fromOwnedSlice(try arena.dupe(u32, @ptrCast(equipment_uids))),
+            .awake_material_count = awake_material_count.toInt(),
         });
     }
 
@@ -534,9 +560,12 @@ pub fn fromPlayerSave(
                 .talent_switch = @enumFromInt(item.talent_switch),
                 .flags = .{
                     .favorite = item.favorite,
+                    .awake_available = item.awake_available,
+                    .awake_enabled = item.awake_enabled,
                 },
                 .skill_levels = undefined,
                 .skin = @enumFromInt(item.skin_id),
+                .awakening = @enumFromInt(item.awake_id),
             };
 
             inline for (&avatar.meta[i].skill_levels, 0..) |*level, skill_i|
@@ -552,6 +581,8 @@ pub fn fromPlayerSave(
                     @enumFromInt(item.equipment_uids.items[slot_i])
                 else
                     .none;
+
+            avatar.awake_material_counts[i] = @enumFromInt(item.awake_material_count);
         }
     } else {
         props.getPtr(.avatar, index).* = .init;

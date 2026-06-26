@@ -1,0 +1,302 @@
+.{
+    .{
+        .id = 102100,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 102101,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 102102,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 102103,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 102104,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 102105,
+        .avatar_id = 1021,
+        .upgrade_item_ids = .{20102},
+    },
+    .{
+        .id = 104100,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 104101,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 104102,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 104103,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 104104,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 104105,
+        .avatar_id = 1041,
+        .upgrade_item_ids = .{20104},
+    },
+    .{
+        .id = 114100,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 114101,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 114102,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 114103,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 114104,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 114105,
+        .avatar_id = 1141,
+        .upgrade_item_ids = .{20114},
+    },
+    .{
+        .id = 117100,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 117101,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 117102,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 117103,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 117104,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 117105,
+        .avatar_id = 1171,
+        .upgrade_item_ids = .{20117},
+    },
+    .{
+        .id = 118100,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 118101,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 118102,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 118103,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 118104,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 118105,
+        .avatar_id = 1181,
+        .upgrade_item_ids = .{20118},
+    },
+    .{
+        .id = 119100,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 119101,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 119102,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 119103,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 119104,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 119105,
+        .avatar_id = 1191,
+        .upgrade_item_ids = .{20119},
+    },
+    .{
+        .id = 120100,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 120101,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 120102,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 120103,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 120104,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 120105,
+        .avatar_id = 1201,
+        .upgrade_item_ids = .{20120},
+    },
+    .{
+        .id = 121100,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 121101,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 121102,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 121103,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 121104,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 121105,
+        .avatar_id = 1211,
+        .upgrade_item_ids = .{20121},
+    },
+    .{
+        .id = 126100,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 126101,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 126102,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 126103,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 126104,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 126105,
+        .avatar_id = 1261,
+        .upgrade_item_ids = .{20126},
+    },
+    .{
+        .id = 138100,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 138101,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 138102,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 138103,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 138104,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+    .{
+        .id = 138105,
+        .avatar_id = 1381,
+        .upgrade_item_ids = .{20138},
+    },
+}

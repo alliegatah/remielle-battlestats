@@ -24,6 +24,8 @@ pub fn playerSync(
         .player_accessory = try buildPlayerAccessory(notify.allocator, changes.control_guise_avatar),
     };
 
+    sync.item = try buildItemSync(notify.allocator, changes.avatars);
+
     notify.one(sync);
 }
 
@@ -67,6 +69,23 @@ fn buildPlayerAccessory(
         return null;
 
     return .{ .control_guise_avatar_id = control_guise_avatar.toInt() };
+}
+
+fn buildItemSync(allocator: Allocator, avatar_changes: []const logic.Changes.Avatar) !?pb.ItemSync {
+    if (avatar_changes.len == 0) return null;
+
+    var sync: pb.ItemSync = .{
+        .material_list = try .initCapacity(allocator, avatar_changes.len),
+    };
+
+    for (avatar_changes) |avatar_change| {
+        sync.material_list.appendAssumeCapacity(.{
+            .id = 20_000 + @divFloor(@intFromEnum(avatar_change.id), 10),
+            .count = avatar_change.awake_material_count.toInt(),
+        });
+    }
+
+    return sync;
 }
 
 const Notify = notifiers.Notify;

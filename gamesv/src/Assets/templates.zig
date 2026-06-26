@@ -22,6 +22,7 @@ pub const weapon_star = @import("templates/weapon_star.zig");
 pub const equipment_level = @import("templates/equipment_level.zig");
 pub const equipment_suit = @import("templates/equipment_suit.zig");
 pub const avatar_battle = @import("templates/avatar_battle.zig");
+pub const avatar_special_awaken = @import("templates/avatar_special_awaken.zig");
 
 pub const Property = struct {
     property: u32,

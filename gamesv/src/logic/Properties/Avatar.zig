@@ -9,6 +9,7 @@ ids: [size]Id,
 meta: [size]Meta,
 weapon_uids: [size]OptionalUID,
 equipment_uids: [size][equipment_slots]OptionalUID,
+awake_material_counts: [size]Awakening.Material,
 
 pub const init: Avatar = .{
     .indexes = .init(.{}),
@@ -16,6 +17,7 @@ pub const init: Avatar = .{
     .meta = undefined,
     .weapon_uids = undefined,
     .equipment_uids = undefined,
+    .awake_material_counts = undefined,
 };
 
 pub const Meta = struct {
@@ -27,6 +29,7 @@ pub const Meta = struct {
     flags: Flags,
     skill_levels: [Skill.count]Skill.Level,
     skin: Skin,
+    awakening: Awakening,
 };
 
 pub fn count(avatar: *const Avatar) usize {
@@ -84,11 +87,40 @@ pub const Skin = enum(u32) {
     }
 };
 
+pub const Awakening = enum(u32) {
+    none = 0,
+    _,
+
+    pub fn toInt(awakening: Awakening) u32 {
+        return @intFromEnum(awakening);
+    }
+
+    pub const Material = enum(u8) {
+        none = std.math.maxInt(u8),
+        _,
+
+        pub fn toInt(mat: Material) u8 {
+            return @intFromEnum(mat);
+        }
+
+        pub fn add(mat: Material, num: u8) Material {
+            return @enumFromInt(switch (mat) {
+                .none => 1,
+                else => @intFromEnum(mat) + num,
+            });
+        }
+    };
+};
+
 pub const Flags = packed struct {
     favorite: bool,
+    awake_available: bool,
+    awake_enabled: bool,
 
     pub const init: Flags = .{
         .favorite = false,
+        .awake_available = false,
+        .awake_enabled = false,
     };
 };
 
@@ -155,6 +187,7 @@ pub const TalentSwitch = enum(u6) {
 const templates = Assets.templates;
 
 const Assets = @import("../../Assets.zig");
+const Properties = @import("../Properties.zig");
 
 const std = @import("std");
 const Avatar = @This();
