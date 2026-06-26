@@ -71,12 +71,14 @@ pub const PlayerSave = struct {
     equip: ?EquipSave = null,
     buddy: ?BuddySave = null,
     hall: ?HallSave = null,
+    main_city_time: ?MainCityTimeSave = null,
     pub const basic_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const weapon_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const equip_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
     pub const hall_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const main_city_time_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
 };
 
 pub const BasicSave = struct {
@@ -214,3 +216,11 @@ pub const HallSave = struct {
     pub const section_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
 };
 
+pub const MainCityTimeSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "MainCityTimeSave";
+    time_in_minutes: u32 = 0,
+    day_of_week: u32 = 0,
+    pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+};

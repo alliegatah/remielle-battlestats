@@ -1,4 +1,5 @@
 game_mode: ?GameMode,
+main_city_time: ?MainCityTime,
 npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
@@ -6,6 +7,7 @@ avatars: []const Avatar,
 
 pub const init: Changes = .{
     .game_mode = null,
+    .main_city_time = null,
     .npc_interaction = null,
     .control_avatar = null,
     .control_guise_avatar = null,
@@ -159,6 +161,11 @@ pub const GameMode = union(enum) {
             };
         }
     };
+};
+
+pub const MainCityTime = struct {
+    time_in_minutes: u11,
+    day_of_week: Properties.MainCityTime.DayOfWeek,
 };
 
 pub const NpcInteraction = struct {

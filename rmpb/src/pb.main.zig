@@ -18703,6 +18703,8 @@ pub const HallRefreshScNotify = struct {
     CMDHJOKBKHC: std.ArrayList([]const u8) = .empty,
     KLPOCANBLPI: u32 = 0,
     CKPOEFDFMFB: std.ArrayList(EPIMCADLHDJ) = .empty,
+    scene_time_in_minutes: u32 = 0,
+    day_of_week: u32 = 0,
 };
 
 pub const GLIFLAHJPOD = struct {
@@ -28968,6 +28970,8 @@ pub const HallSceneData = struct {
     KLPOCANBLPI: u32 = 0,
     LBGCLIKLMKD: std.ArrayList(i32) = .empty,
     NHIJOIEMDII: std.ArrayList(PHGEMKGHIFG) = .empty,
+    scene_time_in_minutes: u32 = 0,
+    day_of_week: u32 = 0,
 };
 
 pub const BuddyUnitInfo = struct {
@@ -39950,5 +39954,17 @@ pub const FIKIMCLOHOF = struct {
 pub const MFPGBFGMCAC = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "MFPGBFGMCAC";
+    retcode: i32 = 0,
+};
+
+pub const ModMainCityTimeCsReq = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "ModMainCityTimeCsReq";
+    time_period: u32 = 0,
+};
+
+pub const ModMainCityTimeScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "ModMainCityTimeScRsp";
     retcode: i32 = 0,
 };

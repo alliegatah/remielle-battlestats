@@ -88,6 +88,31 @@ pub fn enterSectionComplete(
     response.set(.init);
 }
 
+pub fn modMainCityTime(
+    message: Message(pb.ModMainCityTimeCsReq),
+    properties: logic.Properties.Mutable(.{
+        Properties.MainCityTime,
+    }),
+    changes: Changes.Builder(.{
+        Changes.MainCityTime,
+    }),
+    response: Response(pb.ModMainCityTimeScRsp),
+) !void {
+    const next_time_period = std.enums.fromInt(Properties.MainCityTime.TimePeriod, message.data.time_period) orelse
+        return response.fail(1);
+
+    var main_city_time: Changes.MainCityTime = .{
+        .time_in_minutes = next_time_period.toTimeInMinutes(),
+        .day_of_week = properties.main_city_time.day_of_week,
+    };
+
+    if (next_time_period.isNextDayOf(.fromTimeInMinutes(properties.main_city_time.time_in_minutes)))
+        main_city_time.day_of_week = main_city_time.day_of_week.nextDay();
+
+    changes.insert(main_city_time);
+    response.set(.init);
+}
+
 const Message = handlers.Message;
 const Response = handlers.Response;
 

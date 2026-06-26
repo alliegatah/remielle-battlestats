@@ -9,6 +9,7 @@ buddy: Buddy,
 weapon: Weapon,
 equip: Equipment,
 hall: Hall,
+main_city_time: MainCityTime,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -25,6 +26,7 @@ pub fn setDefaultsAt(list: *List, at: Player) void {
     list.getPtr(.weapon, index).* = .init;
     list.getPtr(.equip, index).* = .init;
     list.getPtr(.hall, index).* = .init;
+    list.getPtr(.main_city_time, index).* = .init;
 
     unlockAllAvatars(list, at);
     applyAvatarOverrides(list, at);
@@ -235,6 +237,50 @@ pub const Hall = struct {
     };
 };
 
+pub const MainCityTime = struct {
+    time_in_minutes: u11,
+    day_of_week: DayOfWeek,
+
+    pub const init: MainCityTime = .{
+        .time_in_minutes = TimePeriod.toTimeInMinutes(.morning),
+        .day_of_week = .friday,
+    };
+
+    pub const TimePeriod = enum(u11) {
+        morning = 1,
+        afternoon = 2,
+        evening = 3,
+        night = 4,
+
+        pub inline fn toTimeInMinutes(time_period: TimePeriod) u11 {
+            return @mod(@intFromEnum(time_period) * 360, 1440);
+        }
+
+        pub inline fn fromTimeInMinutes(time_in_minutes: u11) TimePeriod {
+            const t = @mod(time_in_minutes, 1440) / 360;
+            return @enumFromInt(if (t == 0) 4 else t);
+        }
+
+        pub inline fn isNextDayOf(next: TimePeriod, prev: TimePeriod) bool {
+            return @intFromEnum(prev) > @intFromEnum(next);
+        }
+    };
+
+    pub const DayOfWeek = enum(u3) {
+        sunday,
+        monday,
+        tuesday,
+        wednesday,
+        thursday,
+        friday,
+        saturday,
+
+        pub inline fn nextDay(day: DayOfWeek) DayOfWeek {
+            return @enumFromInt(@mod(@intFromEnum(day) + 1, 7));
+        }
+    };
+};
+
 pub const BasicInfo = struct {
     level: Level,
     avatar: HallAvatar,
@@ -439,6 +485,12 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .section_id = @intFromEnum(hall.section_id),
     };
 
+    const main_city_time = props.getPtr(.main_city_time, index);
+    const main_city_time_save: pb.MainCityTimeSave = .{
+        .time_in_minutes = main_city_time.time_in_minutes,
+        .day_of_week = @intFromEnum(main_city_time.day_of_week),
+    };
+
     return .{
         .basic = basic_save,
         .avatar = avatar_save,
@@ -446,6 +498,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .weapon = weapon_save,
         .equip = equip_save,
         .hall = hall_save,
+        .main_city_time = main_city_time_save,
     };
 }
 
@@ -586,6 +639,11 @@ pub fn fromPlayerSave(
 
     props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
         .section_id = @enumFromInt(hall_save.section_id),
+    } else .init;
+
+    props.getPtr(.main_city_time, index).* = if (save.main_city_time) |main_city_time_save| .{
+        .time_in_minutes = @truncate(main_city_time_save.time_in_minutes),
+        .day_of_week = @enumFromInt(main_city_time_save.day_of_week),
     } else .init;
 }
 

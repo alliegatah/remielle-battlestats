@@ -8,6 +8,7 @@ pub fn switchGameMode(
         logic.Properties.Buddy,
         logic.Properties.Weapon,
         logic.Properties.Equipment,
+        logic.Properties.MainCityTime,
     }),
     changes: logic.Changes.Subset(.{
         logic.Changes.GameMode,
@@ -22,6 +23,8 @@ pub fn switchGameMode(
                 .scene_type = 1,
                 .hall_scene_data = .{
                     .section_id = @intFromEnum(hall.section_id),
+                    .scene_time_in_minutes = properties.main_city_time.time_in_minutes,
+                    .day_of_week = @intFromEnum(properties.main_city_time.day_of_week),
                     .control_avatar_id = properties.basic_info.control_avatar.toInt(),
                     .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
                     .npc_list = npc_list: {
@@ -293,6 +296,23 @@ pub fn npcInteraction(
     notify.one(.{
         .section_id = @intFromEnum(properties.hall.section_id),
         .action_list = action_list,
+    });
+}
+
+pub fn hallRefresh(
+    properties: Properties.Immutable(.{
+        Properties.Hall,
+    }),
+    changes: logic.Changes.Subset(.{
+        logic.Changes.MainCityTime,
+    }),
+    notify: Notify(pb.HallRefreshScNotify),
+) !void {
+    notify.one(.{
+        .force_refresh = true,
+        .section_id = @intFromEnum(properties.hall.section_id),
+        .scene_time_in_minutes = changes.main_city_time.?.time_in_minutes,
+        .day_of_week = @intFromEnum(changes.main_city_time.?.day_of_week),
     });
 }
 
