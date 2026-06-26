@@ -184,7 +184,7 @@ pub fn bind(
                         else => |e| fatal("failed to save account uid map: {t}", .{e}),
                     };
 
-                    logic.Properties.setDefaultsAt(&server.properties, @enumFromInt(player_index));
+                    logic.Properties.setDefaultsAt(&server.properties, current_time, @enumFromInt(player_index));
 
                     savePlayer(
                         io,
@@ -208,7 +208,7 @@ pub fn bind(
                             log.err("failed to load player with uid {d}: {t}", .{ player_token.uid, e });
 
                             // Reset defaults for now.
-                            logic.Properties.setDefaultsAt(&server.properties, @enumFromInt(player_index));
+                            logic.Properties.setDefaultsAt(&server.properties, current_time, @enumFromInt(player_index));
                             continue;
                         },
                     };
@@ -222,7 +222,7 @@ pub fn bind(
                         log.err("failed to load player with uid {d}: {t}", .{ player_token.uid, err });
 
                         // Reset defaults for now.
-                        logic.Properties.setDefaultsAt(&server.properties, @enumFromInt(player_index));
+                        logic.Properties.setDefaultsAt(&server.properties, current_time, @enumFromInt(player_index));
                         continue;
                     };
                 }

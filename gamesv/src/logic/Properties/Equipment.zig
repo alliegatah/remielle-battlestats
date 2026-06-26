@@ -1,13 +1,11 @@
 pub const capacity = 3_000;
 
-pub const properties_count = 5;
-
 count: u16,
 uids: [capacity]Uid,
 ids: [capacity]u32,
 levels: [capacity]Level,
 stars: [capacity]Star,
-properties: [capacity][properties_count]Property,
+properties: [capacity]Property.List,
 
 pub const init: Equipment = .{
     .count = 0,
@@ -73,6 +71,10 @@ pub const Slot = enum(u8) {
 };
 
 pub const Property = struct {
+    pub const count = 5;
+
+    pub const List = [count]Property;
+
     key: Key,
     base_value: u16,
     add_value: u16,

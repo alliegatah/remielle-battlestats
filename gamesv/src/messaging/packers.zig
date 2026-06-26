@@ -79,11 +79,11 @@ pub fn packEquipmentInfo(
     id: u32,
     level: Equipment.Level,
     star: Equipment.Star,
-    properties: *const [Equipment.properties_count]Equipment.Property,
+    properties: *const Equipment.Property.List,
 ) !pb.EquipInfo {
     var equip_properties: ArrayList(pb.EquipProperty) = try .initCapacity(
         arena,
-        Properties.Equipment.properties_count,
+        Properties.Equipment.Property.count,
     );
 
     equip_properties.appendAssumeCapacity(.{
