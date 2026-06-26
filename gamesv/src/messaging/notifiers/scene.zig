@@ -190,8 +190,29 @@ pub fn switchGameMode(
                         );
 
                         for (hadal_zone.rooms.avatar_lists) |list| for (list) |slot|
-                            if (slot.toId()) |id|
-                                avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(id) });
+                            if (slot.toId()) |id| {
+                                const property_map = try logic.battle.Property.createMap(
+                                    notify.allocator,
+                                    properties.avatar,
+                                    properties.weapon,
+                                    properties.equip,
+                                    id,
+                                );
+
+                                var avatar_unit: pb.AvatarUnitInfo = .{
+                                    .avatar_id = @intFromEnum(id),
+                                    .properties = try .initCapacity(notify.allocator, property_map.count()),
+                                };
+
+                                var iterator = property_map.iterator();
+                                while (iterator.next()) |kv|
+                                    avatar_unit.properties.appendAssumeCapacity(.{
+                                        .key = @intFromEnum(kv.key_ptr.*),
+                                        .value = kv.value_ptr.*,
+                                    });
+
+                                avatar_list.appendAssumeCapacity(avatar_unit);
+                            };
 
                         break :avatar_list avatar_list;
                     },
