@@ -141,6 +141,7 @@ pub fn switchGameMode(
                 .scene_type = 9,
                 .play_type = hadal_zone.getPlayType(),
                 .scene_id = hadal_zone.layer.getId(),
+                .enemy_property_scale = hadal_zone.getEnemyPropertyScale(),
                 .hadal_zone_scene_data = .{
                     .zone_id = @intFromEnum(hadal_zone.layer.zone_id),
                     .room_index = hadal_zone.layer.room_index,
