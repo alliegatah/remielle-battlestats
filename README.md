@@ -17,7 +17,7 @@ For use with the game client, the following run-time dependencies are required:
 - An SDK Server implementation: [hoyo-sdk](https://git.xeondev.com/reversedrooms/hoyo-sdk/releases/tag/0.2) ([see tracking issue for making hoyo-sdk optional](https://git.xeondev.com/remielle/remielle/issues/29))
 - Client patch: [vortex](https://git.xeondev.com/ESD/vortex) (a replacement is being worked on as well)
 
-#### Currently supported client version: `CNBetaWin3.1.2`, it can be found in our [discord server](https://discord.xeondev.com/)
+#### Currently supported client version: `CNBetaWin3.1.3`, it can be found in our [discord server](https://discord.xeondev.com/)
 
 ## Steps to compile and run
 Linux:
