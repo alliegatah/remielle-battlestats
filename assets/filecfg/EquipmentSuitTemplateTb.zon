@@ -236,7 +236,7 @@
         .primary_condition = 2,
         .primary_suit_ability = 0,
         .secondary_condition = 4,
-        .secondary_suit_ability = 0,
+        .secondary_suit_ability = 124,
         .primary_suit_propertys = .{.{ .property = 13102, .value = 1600 }},
     },
 }
