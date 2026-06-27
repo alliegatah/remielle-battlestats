@@ -599,6 +599,54 @@ pub fn mindscapeChangeTabState(
     response.set(.init);
 }
 
+pub fn avatarShowWeaponToggle(
+    message: Message(pb.AvatarShowWeaponToggleCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Avatar,
+    }),
+    changes: Changes.Builder(.{
+        Changes.Avatar,
+    }),
+    response: Response(pb.AvatarShowWeaponToggleScRsp),
+) !void {
+    const maybe_index: ?u32 = avatar_index: {
+        const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
+            break :avatar_index null;
+
+        break :avatar_index properties.avatar.indexes.get(id);
+    };
+
+    const index = maybe_index orelse
+        return response.fail(1);
+
+    var meta = properties.avatar.meta[index];
+
+    if (!meta.flags.show_weapon.isUnlocked())
+        return response.fail(1);
+
+    const show_weapon: Avatar.Flags.ShowWeapon = switch (message.data.show_weapon_type orelse .LOCKED) {
+        .LOCKED => return response.fail(1), // the sense is not being made.
+        .SHOW => .enabled,
+        .HIDE => .disabled,
+    };
+
+    if (meta.flags.show_weapon != show_weapon) {
+        meta.flags.show_weapon = show_weapon;
+
+        const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
+        avatars[0] = .{
+            .id = properties.avatar.ids[index],
+            .meta = meta,
+            .weapon_uid = properties.avatar.weapon_uids[index],
+            .equipment_uids = properties.avatar.equipment_uids[index],
+            .awake_material_count = properties.avatar.awake_material_counts[index],
+        };
+        changes.insert(avatars);
+    }
+
+    response.set(.init);
+}
+
 const Avatar = Properties.Avatar;
 const ArrayList = std.ArrayList;
 const templates = Assets.templates;

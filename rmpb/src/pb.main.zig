@@ -4104,11 +4104,17 @@ pub const ILJPCEGMLMH = struct {
     LDOMNDKGLEE: std.ArrayList(u32) = .empty,
 };
 
-pub const NJEMBAJJBEK = struct {
+pub const AvatarShowWeaponToggleCsReq = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "NJEMBAJJBEK";
+    pub const pb_desc_name = "AvatarShowWeaponToggleCsReq";
     avatar_id: u32 = 0,
     show_weapon_type: ?AvatarShowWeaponType = null,
+};
+
+pub const AvatarShowWeaponToggleScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "AvatarShowWeaponToggleScRsp";
+    retcode: i32 = 0,
 };
 
 pub const IFLHPJIJCLJ = enum(i32) {

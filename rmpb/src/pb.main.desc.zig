@@ -942,7 +942,7 @@ pub const PENJBBKHCON = struct {
     pub const CAJIJCNBBCE_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
 };
 
-pub const FHPIFGHOKLI = struct {
+pub const AvatarShowWeaponToggleCsReq = struct {
     pub const cmd_id: u16 = 8534;
     pub const show_weapon_type_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const avatar_id_field_desc: FieldDesc = .{ .number = 14, .xor = 3449 };
