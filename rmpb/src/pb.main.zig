@@ -25688,6 +25688,12 @@ pub const SavePosInMainCityCsReq = struct {
     position: ?Transform = null,
 };
 
+pub const SavePosInMainCityScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "SavePosInMainCityScRsp";
+    retcode: i32 = 0,
+};
+
 pub const PPNBPACAKBE = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PPNBPACAKBE";

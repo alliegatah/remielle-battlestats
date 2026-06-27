@@ -223,7 +223,20 @@ pub const HallSave = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "HallSave";
     section_id: u32 = 0,
+    position_id: []const u8 = "",
+    position_transform: ?Transform = null,
     pub const section_id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const position_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const position_transform_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+};
+
+pub const Transform = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "Transform";
+    position: std.ArrayList(f64) = .empty,
+    rotation: std.ArrayList(f64) = .empty,
+    pub const position_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const rotation_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
 pub const MainCityTimeSave = struct {

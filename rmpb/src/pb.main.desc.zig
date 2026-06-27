@@ -2396,7 +2396,7 @@ pub const HallSceneData = struct {
     pub const IDDBCKIODEO_field_desc: FieldDesc = .{ .number = 1410, .xor = 0 };
     pub const PNCGHCKEIFC_field_desc: FieldDesc = .{ .number = 1452, .xor = 11215 };
     pub const CHNOJKIJAEF_field_desc: FieldDesc = .{ .number = 1488, .xor = 0 };
-    pub const JFMNDFMLLPG_field_desc: FieldDesc = .{ .number = 1545, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 1545, .xor = 0 };
     pub const JLKKGDHMPHC_field_desc: FieldDesc = .{ .number = 1588, .xor = 0 };
     pub const CBEICHECPAB_field_desc: FieldDesc = .{ .number = 1672, .xor = 0 };
     pub const control_guise_avatar_id_field_desc: FieldDesc = .{ .number = 1686, .xor = 5093 };
@@ -4194,7 +4194,7 @@ pub const BLMLGKPDPPI = struct {
     pub const AMDKBNAHHHF_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const GOLIODJNKBM_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
     pub const NEKALPPKCJP_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
-    pub const JFMNDFMLLPG_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
     pub const GLPPALPFIID_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
     pub const MBHNJNKKHFC_field_desc: FieldDesc = .{ .number = 16, .xor = 0 };
     pub const CFNDGHKBPBA_field_desc: FieldDesc = .{ .number = 17, .xor = 0 };
@@ -7071,7 +7071,7 @@ pub const ELKDNNEPCIH = struct {
 
 pub const MDLKMNMFJIG = struct {
     pub const OFKFJCAFMPJ_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
-    pub const JFMNDFMLLPG_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const BPKKLDDNLAA_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const MBDMMBOOFNI_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const DOGDPFPECEN_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
@@ -19807,7 +19807,7 @@ pub const BuddyInfo = struct {
 };
 
 pub const FPJGMBHGCAC = struct {
-    pub const JFMNDFMLLPG_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const BPKKLDDNLAA_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const MBDMMBOOFNI_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const DOGDPFPECEN_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
@@ -21000,7 +21000,7 @@ pub const EnterSectionCsReq = struct {
     pub const reason_field_desc: FieldDesc = .{ .number = 2, .xor = 15940 };
     pub const DOGDPFPECEN_field_desc: FieldDesc = .{ .number = 4, .xor = 8354 };
     pub const position_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
-    pub const JFMNDFMLLPG_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const transform_id_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const section_id_field_desc: FieldDesc = .{ .number = 7, .xor = 6509 };
     pub const KLKNAFCBFJM_field_desc: FieldDesc = .{ .number = 8, .xor = 5174 };
     pub const PMHKPLDLOOM_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };

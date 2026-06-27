@@ -1,5 +1,6 @@
 game_mode: ?GameMode,
 main_city_time: ?MainCityTime,
+pos_in_main_city: ?PosInMainCity,
 npc_interaction: ?NpcInteraction,
 control_avatar: ?ControlAvatar,
 control_guise_avatar: ?ControlGuiseAvatar,
@@ -8,6 +9,7 @@ avatars: []const Avatar,
 pub const init: Changes = .{
     .game_mode = null,
     .main_city_time = null,
+    .pos_in_main_city = null,
     .npc_interaction = null,
     .control_avatar = null,
     .control_guise_avatar = null,
@@ -23,6 +25,7 @@ pub const GameMode = union(enum) {
     /// Load hall game mode.
     pub const Hall = struct {
         section_id: templates.section_config.Id,
+        position: Properties.Hall.Position,
     };
 
     /// Load training game mode.
@@ -166,6 +169,10 @@ pub const GameMode = union(enum) {
 pub const MainCityTime = struct {
     time_in_minutes: u11,
     day_of_week: Properties.MainCityTime.DayOfWeek,
+};
+
+pub const PosInMainCity = struct {
+    new_position: Properties.Hall.Position,
 };
 
 pub const NpcInteraction = struct {

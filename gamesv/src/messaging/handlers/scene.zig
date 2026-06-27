@@ -12,6 +12,7 @@ pub fn enterWorld(
 
     const mode_switch: Changes.GameMode = .{ .hall = .{
         .section_id = properties.hall.section_id,
+        .position = properties.hall.position,
     } };
 
     changes.insert(mode_switch);
@@ -32,6 +33,7 @@ pub fn leaveCurScene(
 
     const mode_switch: Changes.GameMode = .{ .hall = .{
         .section_id = properties.hall.section_id,
+        .position = properties.hall.position,
     } };
 
     changes.insert(mode_switch);
@@ -45,15 +47,18 @@ pub fn enterSection(
     }),
     response: Response(pb.EnterSectionScRsp),
 ) !void {
-    // TODO: respect `transform` and `transform_id` parameters.
-
     const section_id = std.enums.fromInt(
         templates.section_config.Id,
         message.data.section_id,
     ) orelse return response.fail(1);
 
+    const position: Properties.Hall.Position = Properties.Hall.Position.fromId(
+        message.data.transform_id,
+    ) orelse .init;
+
     const mode_switch: Changes.GameMode = .{ .hall = .{
         .section_id = section_id,
+        .position = position,
     } };
 
     changes.insert(mode_switch);
@@ -93,6 +98,38 @@ pub fn sectionRefresh(
     response: Response(pb.SectionRefreshScRsp),
 ) !void {
     _ = message;
+    response.set(.init);
+}
+
+pub fn savePosInMainCity(
+    message: Message(pb.SavePosInMainCityCsReq),
+    properties: Properties.Immutable(.{
+        Properties.Hall,
+    }),
+    changes: Changes.Builder(.{
+        Changes.PosInMainCity,
+    }),
+    response: Response(pb.SavePosInMainCityScRsp),
+) !void {
+    if (!message.data.real_save) return response.set(.init);
+
+    const section_id = std.enums.fromInt(templates.section_config.Id, message.data.section_id) orelse
+        return response.fail(1);
+
+    // The client might send a request when a section switch is already pending,
+    // it'll have previous section_id in it. Simply ignore such requests for now,
+    // later, maybe there will be a need to store positions for each section.
+    if (message.data.position) |transform| if (properties.hall.section_id == section_id) {
+        const pos_in_main_city: Changes.PosInMainCity = .{
+            .new_position = Properties.Hall.Position.fromVectors(
+                transform.position.items,
+                transform.rotation.items,
+            ) orelse return response.fail(1),
+        };
+
+        changes.insert(pos_in_main_city);
+    };
+
     response.set(.init);
 }
 

@@ -2,6 +2,7 @@ pub const Avatar = @import("Properties/Avatar.zig");
 pub const Buddy = @import("Properties/Buddy.zig");
 pub const Weapon = @import("Properties/Weapon.zig");
 pub const Equipment = @import("Properties/Equipment.zig");
+pub const Hall = @import("Properties/Hall.zig");
 
 basic_info: BasicInfo,
 avatar: Avatar,
@@ -381,14 +382,6 @@ pub const Player = enum(u32) {
     }
 };
 
-pub const Hall = struct {
-    section_id: templates.section_config.Id,
-
-    pub const init: Hall = .{
-        .section_id = .MainCity_Street,
-    };
-};
-
 pub const MainCityTime = struct {
     time_in_minutes: u11,
     day_of_week: DayOfWeek,
@@ -652,6 +645,17 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
     const hall = props.getPtr(.hall, index);
     const hall_save: pb.HallSave = .{
         .section_id = @intFromEnum(hall.section_id),
+        .position_id = switch (hall.position) {
+            .id => |*id| id.view(),
+            .transform => "",
+        },
+        .position_transform = switch (hall.position) {
+            .id => null,
+            .transform => |*transform| .{
+                .position = .fromOwnedSlice(&transform.position),
+                .rotation = .fromOwnedSlice(&transform.rotation),
+            },
+        },
     };
 
     const main_city_time = props.getPtr(.main_city_time, index);
@@ -814,6 +818,13 @@ pub fn fromPlayerSave(
 
     props.getPtr(.hall, index).* = if (save.hall) |hall_save| .{
         .section_id = @enumFromInt(hall_save.section_id),
+        .position = (if (hall_save.position_transform) |transform|
+            Hall.Position.fromVectors(
+                transform.position.items,
+                transform.rotation.items,
+            )
+        else
+            Hall.Position.fromId(hall_save.position_id)) orelse .init,
     } else .init;
 
     props.getPtr(.main_city_time, index).* = if (save.main_city_time) |main_city_time_save| .{
