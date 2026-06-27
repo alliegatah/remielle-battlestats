@@ -1,5 +1,15 @@
 pub const entries: []const Template = @import("WeaponTemplateTb");
 
+pub const map: std.EnumMap(Id, *const Template) = map: {
+    @setEvalBranchQuota(entries.len * entries.len);
+
+    var em: std.EnumMap(Id, *const Template) = .init(.{});
+    for (entries) |*entry|
+        em.put(entry.getId(), entry);
+
+    break :map em;
+};
+
 pub const Id = Id: {
     @setEvalBranchQuota(entries.len * entries.len * entries.len);
 
@@ -32,3 +42,4 @@ pub const Template = struct {
 };
 
 const templates = @import("../templates.zig");
+const std = @import("std");

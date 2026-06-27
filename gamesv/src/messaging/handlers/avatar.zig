@@ -206,13 +206,9 @@ pub fn weaponDress(
     var meta = properties.avatar.meta[index];
 
     if (meta.flags.show_weapon == .locked) {
-        for (templates.weapon.entries) |entry|
-            if (entry.getId() == properties.weapon.ids[weapon_index]) {
-                if (entry.avatar_id == @intFromEnum(properties.avatar.ids[index]))
-                    meta.flags.show_weapon = .enabled;
-
-                break;
-            };
+        const template = templates.weapon.map.get(properties.weapon.ids[weapon_index]).?;
+        if (template.avatar_id == @intFromEnum(properties.avatar.ids[index]))
+            meta.flags.show_weapon = .enabled;
     }
 
     const avatars = try changes.allocator.alloc(Changes.Avatar, 2);

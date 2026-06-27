@@ -338,19 +338,12 @@ pub const Property = enum(u32) {
                 weapon_uid,
             ).?;
 
-            const weapon_id = @intFromEnum(weapon.ids[weapon_index]);
+            const weapon_id = weapon.ids[weapon_index];
             const weapon_level = weapon.levels[weapon_index].toInt();
             const weapon_star = weapon.stars[weapon_index].toInt();
+            const weapon_template = templates.weapon.map.get(weapon_id).?;
 
-            const weapon_template = weapon_template: {
-                for (templates.weapon.entries) |*entry|
-                    if (entry.item_id == weapon_id)
-                        break :weapon_template entry;
-
-                break :weapon;
-            };
-
-            const rarity: u32 = @mod(@divFloor(weapon_id, 1000), 10);
+            const rarity: u32 = @mod(@divFloor(@intFromEnum(weapon_id), 1000), 10);
 
             const level_template = level_template: {
                 for (templates.weapon_level.entries) |*entry| {
