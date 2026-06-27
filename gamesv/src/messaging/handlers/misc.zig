@@ -59,6 +59,7 @@ pub fn getMiscData(
         .business_card = .init,
         .player_accessory = .{
             .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
+            .control_guise_avatar_skin_id = properties.basic_info.control_guise_avatar_skin.toInt(),
         },
     } });
 }

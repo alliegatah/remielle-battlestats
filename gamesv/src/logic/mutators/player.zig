@@ -10,8 +10,10 @@ pub fn mutateBasicInfo(
     if (changes.control_avatar) |control_avatar|
         properties.basic_info.control_avatar = control_avatar;
 
-    if (changes.control_guise_avatar) |control_guise_avatar|
-        properties.basic_info.control_guise_avatar = control_guise_avatar;
+    if (changes.control_guise_avatar) |control_guise_avatar| {
+        properties.basic_info.control_guise_avatar = control_guise_avatar.guise;
+        properties.basic_info.control_guise_avatar_skin = control_guise_avatar.guise_skin;
+    }
 }
 
 const logic = @import("../../logic.zig");

@@ -72,9 +72,11 @@ pub fn avatarSkinDress(
     message: Message(pb.AvatarSkinDressCsReq),
     properties: Properties.Immutable(.{
         Properties.Avatar,
+        Properties.BasicInfo,
     }),
     changes: Changes.Builder(.{
         Changes.Avatar,
+        Changes.ControlGuiseAvatar,
     }),
     response: Response(pb.AvatarSkinDressScRsp),
 ) !void {
@@ -111,6 +113,12 @@ pub fn avatarSkinDress(
         };
 
         changes.insert(avatars);
+
+        if (properties.basic_info.control_guise_avatar.toInt() == @intFromEnum(properties.avatar.ids[index]))
+            changes.insert(Changes.ControlGuiseAvatar{
+                .guise = properties.basic_info.control_guise_avatar,
+                .guise_skin = @enumFromInt(message.data.avatar_skin_id),
+            });
     }
 
     response.set(.init);
@@ -120,9 +128,11 @@ pub fn avatarSkinUnDress(
     message: Message(pb.AvatarSkinUnDressCsReq),
     properties: Properties.Immutable(.{
         Properties.Avatar,
+        Properties.BasicInfo,
     }),
     changes: Changes.Builder(.{
         Changes.Avatar,
+        Changes.ControlGuiseAvatar,
     }),
     response: Response(pb.AvatarSkinUnDressScRsp),
 ) !void {
@@ -152,6 +162,12 @@ pub fn avatarSkinUnDress(
         };
 
         changes.insert(avatars);
+
+        if (properties.basic_info.control_guise_avatar.toInt() == @intFromEnum(properties.avatar.ids[index]))
+            changes.insert(Changes.ControlGuiseAvatar{
+                .guise = properties.basic_info.control_guise_avatar,
+                .guise_skin = .none,
+            });
     }
 
     response.set(.init);

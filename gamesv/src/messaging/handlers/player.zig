@@ -40,7 +40,7 @@ pub fn modAvatar(
     const new_control_avatar = Properties.HallAvatar.fromInt(message.data.control_avatar_id) orelse
         return response.fail(1);
 
-    const new_control_guise_avatar = Properties.HallAvatar.Guise.fromRawId(
+    const new_guise = Properties.HallAvatar.Guise.fromRawId(
         properties.avatar,
         message.data.control_guise_avatar_id,
     ) catch |err| return switch (err) {
@@ -52,8 +52,11 @@ pub fn modAvatar(
     if (properties.basic_info.control_avatar != new_control_avatar)
         changes.insert(new_control_avatar);
 
-    if (properties.basic_info.control_guise_avatar != new_control_guise_avatar)
-        changes.insert(new_control_guise_avatar);
+    if (properties.basic_info.control_guise_avatar != new_guise)
+        changes.insert(Changes.ControlGuiseAvatar{
+            .guise = new_guise,
+            .guise_skin = new_guise.getSkin(properties.avatar),
+        });
 
     response.set(.init);
 }

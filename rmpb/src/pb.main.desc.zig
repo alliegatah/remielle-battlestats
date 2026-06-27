@@ -4512,7 +4512,7 @@ pub const PlayerAccessoryData = struct {
     pub const EMFNPNHCLMB_field_desc: FieldDesc = .{ .number = 10, .xor = 13528 };
     pub const LHBNHAJLKEJ_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const OHKHGBNFJME_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
-    pub const OKJBEKMDBPD_field_desc: FieldDesc = .{ .number = 15, .xor = 15941 };
+    pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 15, .xor = 15941 };
 };
 
 pub const ONLBAFALIAD = struct {
@@ -28837,7 +28837,7 @@ pub const PlayerAccessorySync = struct {
     pub const EMFNPNHCLMB_field_desc: FieldDesc = .{ .number = 6, .xor = 13238 };
     pub const CCPCIIPLFDG_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
     pub const OHKHGBNFJME_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
-    pub const OKJBEKMDBPD_field_desc: FieldDesc = .{ .number = 15, .xor = 4302 };
+    pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 15, .xor = 4302 };
 };
 
 pub const MHELCCCHFCI = struct {

@@ -174,7 +174,10 @@ pub const NpcInteraction = struct {
 
 pub const ControlAvatar = Properties.HallAvatar;
 
-pub const ControlGuiseAvatar = Properties.HallAvatar.Guise;
+pub const ControlGuiseAvatar = struct {
+    guise: Properties.HallAvatar.Guise,
+    guise_skin: Properties.HallAvatar.Guise.Skin,
+};
 
 /// Avatar modification.
 pub const Avatar = struct {

@@ -68,7 +68,10 @@ fn buildPlayerAccessory(
     const control_guise_avatar = maybe_control_guise_avatar orelse
         return null;
 
-    return .{ .control_guise_avatar_id = control_guise_avatar.toInt() };
+    return .{
+        .control_guise_avatar_id = control_guise_avatar.guise.toInt(),
+        .control_guise_avatar_skin_id = control_guise_avatar.guise_skin.toInt(),
+    };
 }
 
 fn buildItemSync(allocator: Allocator, avatar_changes: []const logic.Changes.Avatar) !?pb.ItemSync {

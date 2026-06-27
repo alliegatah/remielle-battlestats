@@ -88,10 +88,12 @@ pub const BasicSave = struct {
     avatar_id: u32 = 0,
     control_avatar_id: u32 = 0,
     control_guise_avatar_id: u32 = 0,
+    control_guise_avatar_skin_id: u32 = 0,
     pub const level_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const control_avatar_id_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const control_guise_avatar_id_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
 };
 
 pub const AvatarSave = struct {
@@ -232,4 +234,3 @@ pub const MainCityTimeSave = struct {
     pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
-

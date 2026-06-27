@@ -9543,7 +9543,7 @@ pub const PlayerAccessoryData = struct {
     pub const pb_desc_name = "PlayerAccessoryData";
     control_guise_avatar_id: u32 = 0,
     CEEJOIEAMNM: std.ArrayList(u32) = .empty,
-    PABEGPEBCLC: u32 = 0,
+    control_guise_avatar_skin_id: u32 = 0,
     CPAPKHFDNEB: std.ArrayList(JFDKJHAAMJF) = .empty,
     CACJJDENJGE: u32 = 0,
 };
@@ -36019,7 +36019,7 @@ pub const PlayerAccessorySync = struct {
     pub const pb_desc_name = "PlayerAccessorySync";
     CPAPKHFDNEB: std.ArrayList(JFDKJHAAMJF) = .empty,
     IGMCFIMEMML: bool = false,
-    PABEGPEBCLC: u32 = 0,
+    control_guise_avatar_skin_id: u32 = 0,
     JHCFOPEDEBO: std.ArrayList(OHIGLBGFOFK) = .empty,
     CACJJDENJGE: u32 = 0,
     CEEJOIEAMNM: std.ArrayList(u32) = .empty,

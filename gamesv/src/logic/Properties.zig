@@ -438,12 +438,14 @@ pub const BasicInfo = struct {
     avatar: HallAvatar,
     control_avatar: HallAvatar,
     control_guise_avatar: HallAvatar.Guise,
+    control_guise_avatar_skin: HallAvatar.Guise.Skin,
 
     pub const init: BasicInfo = .{
         .level = .max,
         .avatar = .wise,
         .control_avatar = .wise,
         .control_guise_avatar = .fromIdUnchecked(.remielle),
+        .control_guise_avatar_skin = .none,
     };
 };
 
@@ -483,6 +485,8 @@ pub const HallAvatar = enum(u32) {
         belle = @intFromEnum(HallAvatar.belle),
         _,
 
+        pub const Skin = Properties.Avatar.Skin;
+
         pub const FromRawIdError = error{
             InvalidAvatarId,
             AvatarNotUnlocked,
@@ -501,6 +505,13 @@ pub const HallAvatar = enum(u32) {
                 else
                     error.AvatarNotUnlocked,
             };
+        }
+
+        pub fn getSkin(guise: Guise, player_avatar_prop: *const Avatar) Skin {
+            if (guise == .none) return .none;
+
+            const index = player_avatar_prop.indexes.get(@enumFromInt(guise.toInt())).?;
+            return player_avatar_prop.meta[index].skin;
         }
 
         pub fn fromIdUnchecked(id: templates.avatar_base.Id) Guise {
@@ -522,6 +533,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .avatar_id = basic_info.avatar.toInt(),
         .control_avatar_id = basic_info.control_avatar.toInt(),
         .control_guise_avatar_id = basic_info.control_guise_avatar.toInt(),
+        .control_guise_avatar_skin_id = basic_info.control_guise_avatar_skin.toInt(),
     };
 
     const avatar = props.getPtr(.avatar, index);
@@ -673,6 +685,7 @@ pub fn fromPlayerSave(
         .avatar = @enumFromInt(basic.avatar_id),
         .control_avatar = @enumFromInt(basic.control_avatar_id),
         .control_guise_avatar = @enumFromInt(basic.control_guise_avatar_id),
+        .control_guise_avatar_skin = @enumFromInt(basic.control_guise_avatar_skin_id),
     } else .init;
 
     if (save.avatar) |avatar_save| {
