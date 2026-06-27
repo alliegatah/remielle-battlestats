@@ -88,6 +88,14 @@ pub fn enterSectionComplete(
     response.set(.init);
 }
 
+pub fn sectionRefresh(
+    message: Message(pb.SectionRefreshCsReq),
+    response: Response(pb.SectionRefreshScRsp),
+) !void {
+    _ = message;
+    response.set(.init);
+}
+
 pub fn modMainCityTime(
     message: Message(pb.ModMainCityTimeCsReq),
     properties: logic.Properties.Mutable(.{
