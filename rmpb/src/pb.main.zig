@@ -3481,11 +3481,17 @@ pub const KACPBLKFGLP = enum(i32) {
     KACPBLKFGLP_CoopParam = 6,
 };
 
-pub const BDFPMKAFPEE = struct {
+pub const MindscapeChangeTabStateCsReq = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "BDFPMKAFPEE";
-    talent_switch_list: std.ArrayList(bool) = .empty,
+    pub const pb_desc_name = "MindscapeChangeTabStateCsReq";
+    mindscape_tab_state: std.ArrayList(bool) = .empty,
     avatar_id: u32 = 0,
+};
+
+pub const MindscapeChangeTabStateScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "MindscapeChangeTabStateScRsp";
+    retcode: i32 = 0,
 };
 
 pub const BFKJCCLJFOF = struct {
@@ -37959,7 +37965,7 @@ pub const AvatarInfo = struct {
     first_get_time: i64 = 0,
     id: u32 = 0,
     exp: u32 = 0,
-    talent_switch_list: std.ArrayList(bool) = .empty,
+    mindscape_tab_state: std.ArrayList(bool) = .empty,
     show_weapon_type: ?AvatarShowWeaponType = null,
     unlocked_talent_num: u32 = 0,
     PKMJODKNBBC: bool = false,

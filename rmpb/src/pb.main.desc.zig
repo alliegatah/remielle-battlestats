@@ -22774,7 +22774,7 @@ pub const AvatarInfo = struct {
     pub const first_get_time_field_desc: FieldDesc = .{ .number = 1, .xor = 3163 };
     pub const passive_skill_level_field_desc: FieldDesc = .{ .number = 2, .xor = 12614 };
     pub const is_favorite_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
-    pub const talent_switch_list_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
+    pub const mindscape_tab_state_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const rank_field_desc: FieldDesc = .{ .number = 5, .xor = 748 };
     pub const show_weapon_type_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const level_field_desc: FieldDesc = .{ .number = 7, .xor = 8686 };
@@ -23105,9 +23105,9 @@ pub const CBBOLJJMIJM = struct {
     pub const LBIOHNFGBKB_field_desc: FieldDesc = .{ .number = 6, .xor = 14668 };
 };
 
-pub const JCNBCAPFIHP = struct {
+pub const MindscapeChangeTabStateCsReq = struct {
     pub const cmd_id: u16 = 1333;
-    pub const talent_switch_list_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const mindscape_tab_state_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const avatar_id_field_desc: FieldDesc = .{ .number = 12, .xor = 6619 };
 };
 

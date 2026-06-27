@@ -35,7 +35,7 @@ pub const Meta = struct {
     exp: u32,
     rank: Rank,
     talents: Talents,
-    talent_switch: TalentSwitch,
+    mindscape_tab_state: MindscapeTabState,
     flags: Flags,
     skill_levels: [Skill.count]Skill.Level,
     skin: Skin,
@@ -166,16 +166,19 @@ pub const Skill = enum(u8) {
     }
 };
 
-pub const TalentSwitch = enum(u6) {
-    pub const count: usize = 6;
+pub const MindscapeTabState = enum(u6) {
+    pub const tab_count = 6;
 
     init = 0b000000,
     _,
 
-    pub fn fromBools(bools: *[TalentSwitch.count]bool) ?TalentSwitch {
+    pub fn fromBools(bools: []const bool) ?MindscapeTabState {
+        if (bools.len != tab_count)
+            return null;
+
         var int: u6 = 0;
-        inline for (bools, 0..) |bit, index|
-            int |= @intFromBool(bit) << index;
+        for (bools, 0..) |bit, index|
+            int |= @as(u6, @intFromBool(bit)) << @intCast(index);
 
         if ((int & 0b111) & ((int >> 3) & 0b111) != 0)
             return null;
@@ -183,14 +186,19 @@ pub const TalentSwitch = enum(u6) {
         return @enumFromInt(int);
     }
 
-    pub fn toBools(ts: TalentSwitch) [TalentSwitch.count]bool {
-        const int = @intFromEnum(ts);
-        var bools: [TalentSwitch.count]bool = undefined;
+    pub fn toBools(mind: MindscapeTabState) [MindscapeTabState.tab_count]bool {
+        const int = @intFromEnum(mind);
+        var bools: [MindscapeTabState.tab_count]bool = undefined;
 
         inline for (&bools, 0..) |*bit, index|
             bit.* = (int >> index) & 1 != 0;
 
         return bools;
+    }
+
+    pub fn requiredTalentNum(mind: MindscapeTabState) u3 {
+        const int: u6 = @intFromEnum(mind);
+        return tab_count - @clz(int);
     }
 };
 

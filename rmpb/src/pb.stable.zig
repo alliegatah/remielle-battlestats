@@ -111,7 +111,7 @@ pub const AvatarItemSave = struct {
     exp: u32 = 0,
     rank: u32 = 0,
     talents: u32 = 0,
-    talent_switch: u32 = 0,
+    mindscape_tab_state: u32 = 0,
     favorite: bool = false,
     skill_levels: std.ArrayList(u32) = .empty,
     skin_id: u32 = 0,
@@ -126,7 +126,7 @@ pub const AvatarItemSave = struct {
     pub const exp_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const rank_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const talents_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
-    pub const talent_switch_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
+    pub const mindscape_tab_state_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const favorite_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
     pub const skill_levels_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
     pub const skin_id_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
@@ -234,3 +234,4 @@ pub const MainCityTimeSave = struct {
     pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
+

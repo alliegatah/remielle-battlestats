@@ -60,7 +60,7 @@ pub fn packAvatarInfo(
         .level = meta.level.toInt(),
         .rank = meta.rank.toInt(),
         .unlocked_talent_num = meta.talents.toInt(),
-        .talent_switch_list = .fromOwnedSlice(try arena.dupe(bool, &meta.talent_switch.toBools())),
+        .mindscape_tab_state = .fromOwnedSlice(try arena.dupe(bool, &meta.mindscape_tab_state.toBools())),
         .skill_type_level = .fromOwnedSlice(try arena.dupe(pb.AvatarSkillLevel, &avatar_skills)),
         .passive_skill_level = meta.skill_levels[Avatar.Skill.core_skill.toInt()].toInt() - 1,
         .cur_weapon_uid = weapon_uid.unwrap() orelse 0,
