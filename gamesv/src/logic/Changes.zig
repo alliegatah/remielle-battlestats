@@ -202,7 +202,11 @@ pub fn Subset(comptime types: anytype) type {
 
     for (types, field_types[1..], field_names[1..]) |C, *field_type, *field_name| {
         search: for (changes_fields) |changes_field| {
-            if (changes_field.type == ?C or changes_field.type == []const C) {
+            if (changes_field.type == ?C) {
+                field_type.* = ?*const C;
+                field_name.* = changes_field.name;
+                break :search;
+            } else if (changes_field.type == []const C) {
                 field_type.* = changes_field.type;
                 field_name.* = changes_field.name;
                 break :search;
@@ -284,11 +288,18 @@ pub fn extract(logic_changes: *const Changes, comptime Sub: type) ?Sub {
     inline for (@typeInfo(Sub).@"struct".fields) |field| {
         if (field.type == void) continue;
 
-        @field(subset, field.name) = @field(logic_changes, field.name);
-
         switch (@typeInfo(field.type)) {
-            .pointer => any_fulfilled |= @intFromBool(@field(logic_changes, field.name).len != 0),
-            .optional => any_fulfilled |= @intFromBool(@field(logic_changes, field.name) != null),
+            .pointer => {
+                @field(subset, field.name) = @field(logic_changes, field.name);
+                any_fulfilled |= @intFromBool(@field(logic_changes, field.name).len != 0);
+            },
+            .optional => {
+                @field(subset, field.name) = if (@field(logic_changes, field.name)) |*change|
+                    change
+                else
+                    null;
+                any_fulfilled |= @intFromBool(@field(logic_changes, field.name) != null);
+            },
             else => comptime unreachable,
         }
     }

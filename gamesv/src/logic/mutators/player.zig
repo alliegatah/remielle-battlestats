@@ -8,7 +8,7 @@ pub fn mutateBasicInfo(
     }),
 ) !void {
     if (changes.control_avatar) |control_avatar|
-        properties.basic_info.control_avatar = control_avatar;
+        properties.basic_info.control_avatar = control_avatar.*;
 
     if (changes.control_guise_avatar) |control_guise_avatar| {
         properties.basic_info.control_guise_avatar = control_guise_avatar.guise;

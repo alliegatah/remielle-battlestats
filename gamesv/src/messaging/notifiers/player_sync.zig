@@ -32,8 +32,8 @@ pub fn playerSync(
 fn buildSelfBasicInfo(
     allocator: Allocator,
     info: *const Properties.BasicInfo,
-    control_avatar: ?logic.Changes.ControlAvatar,
-    control_guise_avatar: ?logic.Changes.ControlGuiseAvatar,
+    control_avatar: ?*const logic.Changes.ControlAvatar,
+    control_guise_avatar: ?*const logic.Changes.ControlGuiseAvatar,
 ) !?pb.SelfBasicInfo {
     if (control_avatar == null and control_guise_avatar == null)
         return null;
@@ -61,7 +61,7 @@ fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) 
 
 fn buildPlayerAccessory(
     allocator: Allocator,
-    maybe_control_guise_avatar: ?logic.Changes.ControlGuiseAvatar,
+    maybe_control_guise_avatar: ?*const logic.Changes.ControlGuiseAvatar,
 ) !?pb.PlayerAccessorySync {
     _ = allocator;
 

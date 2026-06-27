@@ -6,13 +6,13 @@ pub fn mutateHall(
         logic.Properties.Hall,
     }),
 ) !void {
-    switch (changes.game_mode.?) {
+    if (changes.game_mode) |game_mode| switch (game_mode.*) {
         .hall => |hall| {
             properties.hall.section_id = hall.section_id;
         },
 
         .training, .hadal_zone => {},
-    }
+    };
 }
 
 pub fn mutateMainCityTime(

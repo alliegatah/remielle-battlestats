@@ -17,8 +17,8 @@ pub fn switchGameMode(
 ) !void {
     const game_mode = changes.game_mode.?;
 
-    switch (game_mode) {
-        .hall => |hall| notify.one(.{
+    switch (game_mode.*) {
+        .hall => |*hall| notify.one(.{
             .scene = .{
                 .scene_type = 1,
                 .hall_scene_data = .{
