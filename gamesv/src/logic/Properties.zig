@@ -501,10 +501,13 @@ pub const HallAvatar = enum(u32) {
         }
 
         pub fn getSkin(guise: Guise, player_avatar_prop: *const Avatar) Skin {
-            if (guise == .none) return .none;
-
-            const index = player_avatar_prop.indexes.get(@enumFromInt(guise.toInt())).?;
-            return player_avatar_prop.meta[index].skin;
+            return switch (guise) {
+                .none, .wise, .belle => .none,
+                _ => |guise_avatar_id| guise_avatar_id: {
+                    const index = player_avatar_prop.indexes.get(@enumFromInt(guise_avatar_id.toInt())).?;
+                    break :guise_avatar_id player_avatar_prop.meta[index].skin;
+                },
+            };
         }
 
         pub fn fromIdUnchecked(id: templates.avatar_base.Id) Guise {
