@@ -126,11 +126,23 @@ pub const Flags = packed struct {
     favorite: bool,
     awake_available: bool,
     awake_enabled: bool,
+    show_weapon: ShowWeapon,
 
     pub const init: Flags = .{
         .favorite = false,
         .awake_available = false,
         .awake_enabled = false,
+        .show_weapon = .locked,
+    };
+
+    pub const ShowWeapon = enum(u2) {
+        locked = 0b00,
+        disabled = 0b01,
+        enabled = 0b11,
+
+        pub inline fn isUnlocked(sw: ShowWeapon) bool {
+            return (@intFromEnum(sw) & 1) != 0;
+        }
     };
 };
 

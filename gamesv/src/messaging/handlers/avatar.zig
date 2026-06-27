@@ -197,17 +197,29 @@ pub fn weaponDress(
     const weapon_uid = Properties.Weapon.Uid.fromInt(message.data.weapon_uid) orelse
         return response.fail(1);
 
-    if (std.mem.findScalar(
+    const weapon_index = std.mem.findScalar(
         Properties.Weapon.Uid,
         properties.weapon.uids[0..properties.weapon.count],
         weapon_uid,
-    ) == null) return response.fail(1);
+    ) orelse return response.fail(1);
+
+    var meta = properties.avatar.meta[index];
+
+    if (meta.flags.show_weapon == .locked) {
+        for (templates.weapon.entries) |entry|
+            if (entry.getId() == properties.weapon.ids[weapon_index]) {
+                if (entry.avatar_id == @intFromEnum(properties.avatar.ids[index]))
+                    meta.flags.show_weapon = .enabled;
+
+                break;
+            };
+    }
 
     const avatars = try changes.allocator.alloc(Changes.Avatar, 2);
 
     avatars[0] = .{
         .id = properties.avatar.ids[index],
-        .meta = properties.avatar.meta[index],
+        .meta = meta,
         .weapon_uid = @enumFromInt(weapon_uid.toInt()),
         .equipment_uids = properties.avatar.equipment_uids[index],
         .awake_material_count = properties.avatar.awake_material_counts[index],

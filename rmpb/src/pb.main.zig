@@ -12573,9 +12573,9 @@ pub const CEAJKKDLHKL = struct {
 };
 
 pub const AvatarShowWeaponType = enum(i32) {
-    AvatarShowWeaponType_BAFBENCDCHI = 0,
-    AvatarShowWeaponType_INKNDNKIMLF = 1,
-    AvatarShowWeaponType_IJOBMCPNNCK = 2,
+    LOCKED = 0,
+    SHOW = 1,
+    HIDE = 2,
 };
 
 pub const BCCDMKANFHB = struct {

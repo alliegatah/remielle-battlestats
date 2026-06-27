@@ -70,6 +70,11 @@ pub fn packAvatarInfo(
         .awake_id = meta.awakening.toInt(),
         .is_awake_available = meta.flags.awake_available,
         .is_awake_enabled = meta.flags.awake_enabled,
+        .show_weapon_type = switch (meta.flags.show_weapon) {
+            .locked => .LOCKED,
+            .enabled => .SHOW,
+            .disabled => .HIDE,
+        },
     };
 }
 

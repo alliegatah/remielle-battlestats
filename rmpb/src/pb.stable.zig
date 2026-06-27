@@ -118,6 +118,7 @@ pub const AvatarItemSave = struct {
     awake_available: bool = false,
     awake_enabled: bool = false,
     awake_id: u32 = 0,
+    show_weapon: u32 = 0,
     weapon_uid: u32 = 0,
     equipment_uids: std.ArrayList(u32) = .empty,
     awake_material_count: u32 = 0,
@@ -133,6 +134,7 @@ pub const AvatarItemSave = struct {
     pub const awake_available_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
     pub const awake_enabled_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
     pub const awake_id_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
+    pub const show_weapon_field_desc: FieldDesc = .{ .number = 16, .xor = 0 };
     pub const weapon_uid_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
     pub const equipment_uids_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const awake_material_count_field_desc: FieldDesc = .{ .number = 15, .xor = 0 };
