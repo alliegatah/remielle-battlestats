@@ -3,6 +3,7 @@ const size = templates.avatar_base.entries.len;
 pub const equipment_slots: usize = 6;
 
 pub const Id = templates.avatar_base.Id;
+pub const SkinId = templates.avatar_skin_base.Id;
 
 indexes: std.EnumMap(Id, u32),
 ids: [size]Id,
@@ -18,6 +19,15 @@ pub const init: Avatar = .{
     .weapon_uids = undefined,
     .equipment_uids = undefined,
     .awake_material_counts = undefined,
+};
+
+pub const avatar_skin_map: std.EnumArray(SkinId, Id) = init: {
+    var values: std.enums.EnumFieldStruct(SkinId, Id, null) = undefined;
+
+    for (templates.avatar_skin_base.entries) |entry|
+        @field(values, @tagName(entry.getId())) = @enumFromInt(entry.avatar_id);
+
+    break :init .init(values);
 };
 
 pub const Meta = struct {

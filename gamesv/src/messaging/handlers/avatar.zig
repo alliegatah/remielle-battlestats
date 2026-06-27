@@ -78,6 +78,9 @@ pub fn avatarSkinDress(
     }),
     response: Response(pb.AvatarSkinDressScRsp),
 ) !void {
+    const new_avatar_skin_id = std.enums.fromInt(Properties.Avatar.SkinId, message.data.avatar_skin_id) orelse
+        return response.fail(1);
+
     const maybe_index: ?u32 = avatar_index: {
         const id = std.enums.fromInt(Properties.Avatar.Id, message.data.avatar_id) orelse
             break :avatar_index null;
@@ -88,13 +91,17 @@ pub fn avatarSkinDress(
     const index = maybe_index orelse
         return response.fail(1);
 
+    if (Properties.Avatar.avatar_skin_map.get(new_avatar_skin_id) != properties.avatar.ids[index])
+        return response.fail(1);
+
     var meta = properties.avatar.meta[index];
 
     if (meta.skin.toInt() != message.data.avatar_skin_id) {
-        // TODO: check if it belongs to this avatar and if it's unlocked.
+        // TODO: check if it's unlocked.
 
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
 
+        meta.skin = @enumFromInt(message.data.avatar_skin_id);
         avatars[0] = .{
             .id = properties.avatar.ids[index],
             .meta = meta,
