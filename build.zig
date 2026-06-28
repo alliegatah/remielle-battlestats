@@ -85,6 +85,20 @@ pub fn build(b: *Build) void {
 
     StaticAsset.addAll(b, dpsv.root_module, dpsv_assets);
 
+    const sdksv = b.addExecutable(.{
+        .name = "remielle-sdksv",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("sdksv/src/main.zig"),
+            .imports = &.{
+                .{ .name = "rmio", .module = rmio },
+                .{ .name = "rmcli", .module = rmcli },
+                .{ .name = "rmcrypt", .module = rmcrypt },
+            },
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
     const gamesv = b.addExecutable(.{
         .name = "remielle-gamesv",
         .root_module = b.createModule(.{
@@ -111,10 +125,12 @@ pub fn build(b: *Build) void {
     ).dependOn(&compile_main_structs.step);
 
     const serve_dp = b.addRunArtifact(dpsv);
+    const serve_sdk = b.addRunArtifact(sdksv);
     const serve_game = b.addRunArtifact(gamesv);
 
     if (b.args) |args| {
         serve_dp.addArgs(args);
+        serve_sdk.addArgs(args);
         serve_game.addArgs(args);
     }
 
@@ -124,11 +140,17 @@ pub fn build(b: *Build) void {
     ).dependOn(&serve_dp.step);
 
     b.step(
+        "serve-sdk",
+        "start the sdk server",
+    ).dependOn(&serve_sdk.step);
+
+    b.step(
         "serve-game",
         "start the game server",
     ).dependOn(&serve_game.step);
 
     b.installArtifact(dpsv);
+    b.installArtifact(sdksv);
     b.installArtifact(gamesv);
 
     const serve_all_exe = b.addExecutable(.{
@@ -142,11 +164,12 @@ pub fn build(b: *Build) void {
 
     const serve_all = b.addRunArtifact(serve_all_exe);
     serve_all.addFileArg(dpsv.getEmittedBin());
+    serve_all.addFileArg(sdksv.getEmittedBin());
     serve_all.addFileArg(gamesv.getEmittedBin());
 
     b.step(
         "serve-all",
-        "start dpsv and gamesv",
+        "start dpsv, sdksv, gamesv at once",
     ).dependOn(&serve_all.step);
 
     const tests = b.step("test", "run unit tests");
