@@ -148,6 +148,18 @@ pub fn build(b: *Build) void {
         "serve-all",
         "start dpsv and gamesv",
     ).dependOn(&serve_all.step);
+
+    const tests = b.step("test", "run unit tests");
+    const rmio_tests = b.addTest(.{
+        .name = "rmio",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("rmio/src/root.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    tests.dependOn(&b.addRunArtifact(rmio_tests).step);
 }
 
 const gamesv_assets: []const StaticAsset = &.{

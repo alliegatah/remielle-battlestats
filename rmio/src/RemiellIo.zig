@@ -1620,6 +1620,10 @@ pub fn waitForShutdown(rio: *RemiellIo) void {
     rio.block(.shutdown);
 }
 
+test {
+    _ = @import("RemiellIo/test.zig");
+}
+
 const is_windows = native_os == .windows;
 const native_os = builtin.os.tag;
 const is_debug = builtin.mode == .Debug;
