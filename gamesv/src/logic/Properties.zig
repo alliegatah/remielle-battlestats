@@ -1,10 +1,12 @@
 pub const Avatar = @import("Properties/Avatar.zig");
+pub const PlayerAccessory = @import("Properties/PlayerAccessory.zig");
 pub const Buddy = @import("Properties/Buddy.zig");
 pub const Weapon = @import("Properties/Weapon.zig");
 pub const Equipment = @import("Properties/Equipment.zig");
 pub const Hall = @import("Properties/Hall.zig");
 
 basic_info: BasicInfo,
+player_accessory: PlayerAccessory,
 avatar: Avatar,
 buddy: Buddy,
 weapon: Weapon,
@@ -22,6 +24,7 @@ pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
     const index = at.toInt();
 
     list.getPtr(.basic_info, index).* = .init;
+    list.getPtr(.player_accessory, index).* = .init;
     list.getPtr(.avatar, index).* = .init;
     list.getPtr(.buddy, index).* = .init;
     list.getPtr(.weapon, index).* = .init;
@@ -500,9 +503,10 @@ pub const HallAvatar = enum(u32) {
             };
         }
 
-        pub fn getSkin(guise: Guise, player_avatar_prop: *const Avatar) Skin {
+        pub fn getSkin(guise: Guise, player_avatar_prop: *const Avatar, player_accessory_prop: *const PlayerAccessory) Skin {
             return switch (guise) {
-                .none, .wise, .belle => .none,
+                .none => .none,
+                .wise, .belle => player_accessory_prop.meta.get(.fromGuiseUnchecked(guise)).skin,
                 _ => |guise_avatar_id| guise_avatar_id: {
                     const index = player_avatar_prop.indexes.get(@enumFromInt(guise_avatar_id.toInt())).?;
                     break :guise_avatar_id player_avatar_prop.meta[index].skin;
@@ -531,6 +535,16 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .control_guise_avatar_id = basic_info.control_guise_avatar.toInt(),
         .control_guise_avatar_skin_id = basic_info.control_guise_avatar_skin.toInt(),
     };
+
+    const player_accessory = props.getPtr(.player_accessory, index);
+
+    var player_accessory_save: pb.PlayerAccessorySave = .init;
+    try player_accessory_save.avatars.ensureTotalCapacity(arena, PlayerAccessory.slots);
+
+    inline for (std.enums.values(PlayerAccessory.Avatar)) |avatar| player_accessory_save.avatars.appendAssumeCapacity(.{
+        .id = @intFromEnum(avatar),
+        .skin_id = @intFromEnum(player_accessory.meta.get(avatar).skin),
+    });
 
     const avatar = props.getPtr(.avatar, index);
     const avatar_count = avatar.indexes.count();
@@ -670,6 +684,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
 
     return .{
         .basic = basic_save,
+        .player_accessory = player_accessory_save,
         .avatar = avatar_save,
         .buddy = buddy_save,
         .weapon = weapon_save,
@@ -695,6 +710,13 @@ pub fn fromPlayerSave(
         .control_guise_avatar = @enumFromInt(basic.control_guise_avatar_id),
         .control_guise_avatar_skin = @enumFromInt(basic.control_guise_avatar_skin_id),
     } else .init;
+
+    const player_accessory = props.getPtr(.player_accessory, index);
+    player_accessory.* = .init;
+
+    if (save.player_accessory) |player_accessory_save|
+        for (player_accessory_save.avatars.items) |avatar|
+            player_accessory.meta.set(@enumFromInt(avatar.id), .{ .skin = @enumFromInt(avatar.skin_id) });
 
     if (save.avatar) |avatar_save| {
         const avatar = props.getPtr(.avatar, index);

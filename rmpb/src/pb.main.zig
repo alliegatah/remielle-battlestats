@@ -7423,9 +7423,9 @@ pub const IDHIBKMHIIP = struct {
     KECIFEMCOJL: u32 = 0,
 };
 
-pub const JFDKJHAAMJF = struct {
+pub const PlayerAccessoryInfo = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "JFDKJHAAMJF";
+    pub const pb_desc_name = "PlayerAccessoryInfo";
     avatar_id: u32 = 0,
     LGOPNDJOLIL: std.ArrayList(GHAFPDANPLP) = .empty,
     avatar_skin_id: u32 = 0,
@@ -9556,7 +9556,7 @@ pub const PlayerAccessoryData = struct {
     control_guise_avatar_id: u32 = 0,
     CEEJOIEAMNM: std.ArrayList(u32) = .empty,
     control_guise_avatar_skin_id: u32 = 0,
-    CPAPKHFDNEB: std.ArrayList(JFDKJHAAMJF) = .empty,
+    player_accessory_list: std.ArrayList(PlayerAccessoryInfo) = .empty,
     CACJJDENJGE: u32 = 0,
 };
 
@@ -15649,10 +15649,16 @@ pub const JIANHPEPBEP = struct {
     KLCLMMPHCEE: std.ArrayList(ALFJBDFKJMN) = .empty,
 };
 
-pub const DKFHGGHGLPP = struct {
+pub const SavePlayerAccessoryCsReq = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "DKFHGGHGLPP";
-    player_accessory: ?JFDKJHAAMJF = null,
+    pub const pb_desc_name = "SavePlayerAccessoryCsReq";
+    player_accessory: ?PlayerAccessoryInfo = null,
+};
+
+pub const SavePlayerAccessoryScRsp = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "SavePlayerAccessoryScRsp";
+    retcode: i32 = 0,
 };
 
 pub const JNGCPKDNCAN = struct {
@@ -36035,7 +36041,7 @@ pub const HBLKLOIIGPC = struct {
 pub const PlayerAccessorySync = struct {
     pub const init: @This() = .{};
     pub const pb_desc_name = "PlayerAccessorySync";
-    CPAPKHFDNEB: std.ArrayList(JFDKJHAAMJF) = .empty,
+    player_accessory_list: std.ArrayList(PlayerAccessoryInfo) = .empty,
     IGMCFIMEMML: bool = false,
     control_guise_avatar_skin_id: u32 = 0,
     JHCFOPEDEBO: std.ArrayList(OHIGLBGFOFK) = .empty,

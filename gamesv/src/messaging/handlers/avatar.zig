@@ -80,7 +80,7 @@ pub fn avatarSkinDress(
     }),
     response: Response(pb.AvatarSkinDressScRsp),
 ) !void {
-    const new_avatar_skin_id = std.enums.fromInt(Properties.Avatar.SkinId, message.data.avatar_skin_id) orelse
+    const new_skin = templates.avatar_skin_base.map.get(@enumFromInt(message.data.avatar_skin_id)) orelse
         return response.fail(1);
 
     const maybe_index: ?u32 = avatar_index: {
@@ -93,17 +93,17 @@ pub fn avatarSkinDress(
     const index = maybe_index orelse
         return response.fail(1);
 
-    if (Properties.Avatar.avatar_skin_map.get(new_avatar_skin_id) != properties.avatar.ids[index])
+    if (new_skin.avatar_id != @intFromEnum(properties.avatar.ids[index]))
         return response.fail(1);
 
     var meta = properties.avatar.meta[index];
 
-    if (meta.skin.toInt() != message.data.avatar_skin_id) {
+    if (meta.skin.toInt() != new_skin.id) {
         // TODO: check if it's unlocked.
 
         const avatars = try changes.allocator.alloc(Changes.Avatar, 1);
 
-        meta.skin = @enumFromInt(message.data.avatar_skin_id);
+        meta.skin = @enumFromInt(new_skin.id);
         avatars[0] = .{
             .id = properties.avatar.ids[index],
             .meta = meta,
@@ -114,10 +114,10 @@ pub fn avatarSkinDress(
 
         changes.insert(avatars);
 
-        if (properties.basic_info.control_guise_avatar.toInt() == @intFromEnum(properties.avatar.ids[index]))
+        if (properties.basic_info.control_guise_avatar.toInt() == new_skin.avatar_id)
             changes.insert(Changes.ControlGuiseAvatar{
                 .guise = properties.basic_info.control_guise_avatar,
-                .guise_skin = @enumFromInt(message.data.avatar_skin_id),
+                .guise_skin = @enumFromInt(new_skin.id),
             });
     }
 

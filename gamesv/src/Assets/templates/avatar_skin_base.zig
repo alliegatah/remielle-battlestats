@@ -1,5 +1,15 @@
 pub const entries: []const Template = @import("AvatarSkinBaseTemplateTb");
 
+pub const map: std.EnumMap(Id, *const Template) = map: {
+    @setEvalBranchQuota(entries.len * 1000);
+
+    var em: std.EnumMap(Id, *const Template) = .init(.{});
+    for (entries) |*entry|
+        em.put(entry.getId(), entry);
+
+    break :map em;
+};
+
 pub const Id = Id: {
     @setEvalBranchQuota(entries.len * 1000);
     var names: [entries.len][]const u8 = undefined;

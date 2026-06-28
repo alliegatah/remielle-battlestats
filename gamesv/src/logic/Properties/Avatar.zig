@@ -21,15 +21,6 @@ pub const init: Avatar = .{
     .awake_material_counts = undefined,
 };
 
-pub const avatar_skin_map: std.EnumArray(SkinId, Id) = init: {
-    var values: std.enums.EnumFieldStruct(SkinId, Id, null) = undefined;
-
-    for (templates.avatar_skin_base.entries) |entry|
-        @field(values, @tagName(entry.getId())) = @enumFromInt(entry.avatar_id);
-
-    break :init .init(values);
-};
-
 pub const Meta = struct {
     level: Level,
     exp: u32,

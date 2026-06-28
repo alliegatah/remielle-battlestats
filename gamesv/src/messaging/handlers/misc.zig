@@ -15,6 +15,7 @@ pub fn getMiscData(
     message: Message(pb.GetMiscDataCsReq),
     properties: Properties.Immutable(.{
         Properties.BasicInfo,
+        Properties.PlayerAccessory,
     }),
     response: Response(pb.GetMiscDataScRsp),
 ) !void {
@@ -49,6 +50,12 @@ pub fn getMiscData(
         @intFromEnum(templates.post_girl_config.Id.Avatar_Female_Size03_Velina),
     );
 
+    var player_accessory_list: std.ArrayList(pb.PlayerAccessoryInfo) = try .initCapacity(response.allocator, Properties.PlayerAccessory.slots);
+    inline for (std.enums.values(Properties.PlayerAccessory.Avatar)) |avatar| player_accessory_list.appendAssumeCapacity(.{
+        .avatar_id = @intFromEnum(avatar),
+        .avatar_skin_id = @intFromEnum(properties.player_accessory.meta.get(avatar).skin),
+    });
+
     response.set(.{ .data = .{
         .unlock = .{ .unlocked_list = unlocked_list },
         .teleport = .{ .unlocked_list = teleport_list },
@@ -60,6 +67,7 @@ pub fn getMiscData(
         .player_accessory = .{
             .control_guise_avatar_id = properties.basic_info.control_guise_avatar.toInt(),
             .control_guise_avatar_skin_id = properties.basic_info.control_guise_avatar_skin.toInt(),
+            .player_accessory_list = player_accessory_list,
         },
     } });
 }

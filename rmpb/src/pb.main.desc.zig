@@ -4511,7 +4511,7 @@ pub const PlayerAccessoryData = struct {
     pub const control_guise_avatar_id_field_desc: FieldDesc = .{ .number = 4, .xor = 10259 };
     pub const EMFNPNHCLMB_field_desc: FieldDesc = .{ .number = 10, .xor = 13528 };
     pub const LHBNHAJLKEJ_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
-    pub const OHKHGBNFJME_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
+    pub const player_accessory_list_field_desc: FieldDesc = .{ .number = 13, .xor = 0 };
     pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 15, .xor = 15941 };
 };
 
@@ -7318,7 +7318,7 @@ pub const MCIPKCKMPIN = struct {
     pub const FKHMBEOLKMM_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
-pub const DOMCPFIAINI = struct {
+pub const PlayerAccessoryInfo = struct {
     pub const avatar_skin_id_field_desc: FieldDesc = .{ .number = 1, .xor = 1359 };
     pub const JJODKODGIHB_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const KGEKHDEMKLI_field_desc: FieldDesc = .{ .number = 12, .xor = 7666 };
@@ -11548,7 +11548,7 @@ pub const CKMHGDAOLBF = struct {
     pub const avatar_list_field_desc: FieldDesc = .{ .number = 12, .xor = 0 };
 };
 
-pub const DDIEPNICPJK = struct {
+pub const SavePlayerAccessoryCsReq = struct {
     pub const cmd_id: u16 = 8597;
     pub const player_accessory_field_desc: FieldDesc = .{ .number = 14, .xor = 0 };
 };
@@ -28836,7 +28836,7 @@ pub const PlayerAccessorySync = struct {
     pub const MFGEKKODLGL_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const EMFNPNHCLMB_field_desc: FieldDesc = .{ .number = 6, .xor = 13238 };
     pub const CCPCIIPLFDG_field_desc: FieldDesc = .{ .number = 7, .xor = 0 };
-    pub const OHKHGBNFJME_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
+    pub const player_accessory_list_field_desc: FieldDesc = .{ .number = 11, .xor = 0 };
     pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 15, .xor = 4302 };
 };
 

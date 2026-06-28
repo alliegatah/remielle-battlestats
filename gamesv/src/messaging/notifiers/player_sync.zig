@@ -6,6 +6,7 @@ pub fn playerSync(
         logic.Changes.ControlAvatar,
         logic.Changes.ControlGuiseAvatar,
         logic.Changes.Avatar,
+        logic.Changes.PlayerAccessory,
     }),
     notify: Notify(pb.PlayerSyncScNotify),
 ) !void {
@@ -21,7 +22,12 @@ pub fn playerSync(
     sync.avatar = try buildAvatarSync(notify.allocator, changes.avatars);
 
     sync.misc = .{
-        .player_accessory = try buildPlayerAccessory(notify.allocator, changes.control_guise_avatar),
+        .player_accessory = try buildPlayerAccessory(
+            notify.allocator,
+            properties.basic_info,
+            changes.control_guise_avatar,
+            changes.player_accessory,
+        ),
     };
 
     sync.item = try buildItemSync(notify.allocator, changes.avatars);
@@ -61,17 +67,27 @@ fn buildAvatarSync(allocator: Allocator, changes: []const logic.Changes.Avatar) 
 
 fn buildPlayerAccessory(
     allocator: Allocator,
+    info: *const Properties.BasicInfo,
     maybe_control_guise_avatar: ?*const logic.Changes.ControlGuiseAvatar,
+    maybe_player_accessory: ?*const logic.Changes.PlayerAccessory,
 ) !?pb.PlayerAccessorySync {
-    _ = allocator;
+    var sync: pb.PlayerAccessorySync = .{};
 
-    const control_guise_avatar = maybe_control_guise_avatar orelse
-        return null;
+    if (maybe_control_guise_avatar) |control_guise_avatar| {
+        sync.control_guise_avatar_id = control_guise_avatar.guise.toInt();
+        sync.control_guise_avatar_skin_id = control_guise_avatar.guise_skin.toInt();
+    } else {
+        sync.control_guise_avatar_id = info.control_guise_avatar.toInt();
+        sync.control_guise_avatar_skin_id = info.control_guise_avatar_skin.toInt();
+    }
 
-    return .{
-        .control_guise_avatar_id = control_guise_avatar.guise.toInt(),
-        .control_guise_avatar_skin_id = control_guise_avatar.guise_skin.toInt(),
-    };
+    if (maybe_player_accessory) |player_accessory|
+        try sync.player_accessory_list.append(allocator, .{
+            .avatar_id = @intFromEnum(player_accessory.avatar),
+            .avatar_skin_id = @intFromEnum(player_accessory.meta.skin),
+        });
+
+    return sync;
 }
 
 fn buildItemSync(allocator: Allocator, avatar_changes: []const logic.Changes.Avatar) !?pb.ItemSync {

@@ -72,6 +72,7 @@ pub const PlayerSave = struct {
     buddy: ?BuddySave = null,
     hall: ?HallSave = null,
     main_city_time: ?MainCityTimeSave = null,
+    player_accessory: ?PlayerAccessorySave = null,
     pub const basic_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
     pub const weapon_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
@@ -79,6 +80,7 @@ pub const PlayerSave = struct {
     pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
     pub const hall_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const main_city_time_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
+    pub const player_accessory_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
 };
 
 pub const BasicSave = struct {
@@ -94,6 +96,22 @@ pub const BasicSave = struct {
     pub const control_avatar_id_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
     pub const control_guise_avatar_id_field_desc: FieldDesc = .{ .number = 4, .xor = 0 };
     pub const control_guise_avatar_skin_id_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
+};
+
+pub const PlayerAccessorySave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "PlayerAccessorySave";
+    avatars: std.ArrayList(PlayerAccessoryItemSave) = .empty,
+    pub const avatars_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+};
+
+pub const PlayerAccessoryItemSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "PlayerAccessoryItemSave";
+    id: u32 = 0,
+    skin_id: u32 = 0,
+    pub const id_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const skin_id_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
 
 pub const AvatarSave = struct {
@@ -249,4 +267,3 @@ pub const MainCityTimeSave = struct {
     pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
 };
-

@@ -1,4 +1,5 @@
 game_mode: ?GameMode,
+player_accessory: ?PlayerAccessory,
 main_city_time: ?MainCityTime,
 pos_in_main_city: ?PosInMainCity,
 npc_interaction: ?NpcInteraction,
@@ -8,6 +9,7 @@ avatars: []const Avatar,
 
 pub const init: Changes = .{
     .game_mode = null,
+    .player_accessory = null,
     .main_city_time = null,
     .pos_in_main_city = null,
     .npc_interaction = null,
@@ -164,6 +166,11 @@ pub const GameMode = union(enum) {
             };
         }
     };
+};
+
+pub const PlayerAccessory = struct {
+    avatar: Properties.PlayerAccessory.Avatar,
+    meta: Properties.PlayerAccessory.Meta,
 };
 
 pub const MainCityTime = struct {

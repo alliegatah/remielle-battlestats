@@ -16,6 +16,17 @@ pub fn mutateBasicInfo(
     }
 }
 
+pub fn mutatePlayerAccessory(
+    changes: logic.Changes.Subset(.{
+        logic.Changes.PlayerAccessory,
+    }),
+    properties: logic.Properties.Mutable(.{
+        logic.Properties.PlayerAccessory,
+    }),
+) !void {
+    properties.player_accessory.meta.set(changes.player_accessory.?.avatar, changes.player_accessory.?.meta);
+}
+
 const logic = @import("../../logic.zig");
 const mutators = @import("../mutators.zig");
 
