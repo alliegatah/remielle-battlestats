@@ -26,27 +26,27 @@
             .servers = .{"remielle"},
             .cdn_conf = .{
                 .design_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17042499_207b226c11/client/",
-                    .data_revision = "17042499",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17059869_e55b215cb8/client/",
+                    .data_revision = "17059869",
                     .md5_files =
-                    \\[{"fileName":"data_version","fileSize":5802,"fileMD5":"180445945924983310"}]
+                    \\[{"fileName":"data_version","fileSize":5795,"fileMD5":"16981359474538778096"}]
                     ,
                 },
                 .game_res = .{
                     .audio_revision = "17006296",
-                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_17042499_207b226c11/client/",
+                    .base_url = "https://autopatchcn.juequling.com/game_res/beta_live/output_17059869_e55b215cb8/client/",
                     .branch = "beta_live",
                     .md5_files =
-                    \\[{"fileName":"res_version","fileSize":2906478,"fileMD5":"8299211746376879377"},{"fileName":"audio_version","fileSize":67632,"fileMD5":"16306888458043811221"},{"fileName":"base_revision","fileSize":19,"fileMD5":"12399250627823283967"}]
+                    \\[{"fileName":"res_version","fileSize":2906716,"fileMD5":"9291887266542601863"},{"fileName":"audio_version","fileSize":67632,"fileMD5":"16306888458043811221"},{"fileName":"base_revision","fileSize":19,"fileMD5":"12399250627823283967"}]
                     ,
-                    .res_revision = "17042499",
+                    .res_revision = "17059869",
                 },
                 .silence_data = .{
-                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17042499_207b226c11/client_silence/",
+                    .base_url = "https://autopatchcn.juequling.com/design_data/beta_live/output_17059869_e55b215cb8/client_silence/",
                     .md5_files =
-                    \\[{"fileName":"silence_version","fileSize":570,"fileMD5":"17259491534187035263"}]
+                    \\[{"fileName":"silence_version","fileSize":570,"fileMD5":"6451983301128827309"}]
                     ,
-                    .silence_revision = "17042499",
+                    .silence_revision = "17059869",
                 },
             },
         },
