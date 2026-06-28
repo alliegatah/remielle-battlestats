@@ -3,7 +3,10 @@ arena: std.heap.ArenaAllocator,
 coro_storage: Coroutine.Storage,
 current_coro: ?*Coroutine,
 naked_wait: WaitPoint,
+/// List of coroutines scheduled to be switched to.
 wakeup_queue: DoublyLinkedList,
+/// List of coroutines waiting on a futex.
+wait_list: DoublyLinkedList,
 csprng: ?DefaultCsprng,
 shutdown: enum(u2) {
     ignored = 0b00,
@@ -38,10 +41,25 @@ const WaitPoint = struct {
     wakeup_queue_node: DoublyLinkedList.Node,
 
     const Awaitee = union(enum) {
+        const Futex = struct {
+            const Cancelation = enum {
+                unblocked,
+                blocked, // `futexWaitUncancelable` is used.
+                canceled, // `futexWait` was interrupted by cancelation request.
+            };
+
+            ptr: *const u32,
+            expected: u32,
+            cancelation: Cancelation,
+            wait_list_node: DoublyLinkedList.Node,
+        };
+
         /// The coroutine is not waiting on anything.
         none: void,
         /// The coroutine has finished and is now in an idle state.
         idle: void,
+        /// The coroutine is waiting for a `futexWake`.
+        futex: Futex,
         /// The coroutine is waiting for an I/O operation to complete.
         operation: struct {
             /// How many of those below are pending
@@ -55,8 +73,9 @@ const WaitPoint = struct {
 
         pub fn ready(awaitee: *const Awaitee) bool {
             return switch (awaitee.*) {
-                .none => true,
-                .idle => false,
+                .none => true, // coroutine control flow is not blocked on anything.
+                .idle => false, // coroutine has exited.
+                .futex => false, // coroutine is waiting for an explicit wakeup call.
                 .operation => |operation| operation.outstanding == 0,
                 .coroutine => |child| child.state == .finished,
             };
@@ -100,6 +119,7 @@ pub fn init(gpa: Allocator, options: InitOptions) InitError!RemiellIo {
             .context = undefined,
         },
         .wakeup_queue = .{},
+        .wait_list = .{},
         .csprng = null,
         .shutdown = .ignored,
         .shutdown_wait_point = undefined,
@@ -292,6 +312,9 @@ const vtable: Io.VTable = vtable: {
     v.recancel = recancel;
     v.checkCancel = checkCancelErased;
     v.swapCancelProtection = swapCancelProtection;
+    v.futexWait = futexWait;
+    v.futexWaitUncancelable = futexWaitUncancelable;
+    v.futexWake = futexWake;
     v.netBindIp = netBindIp;
     v.netSend = netSend;
     v.netListenIp = netListenIp;
@@ -315,6 +338,82 @@ const vtable: Io.VTable = vtable: {
 
 pub fn io(rio: *RemiellIo) Io {
     return .{ .userdata = rio, .vtable = &vtable };
+}
+
+fn futexWait(
+    userdata: ?*anyopaque,
+    ptr: *const u32,
+    expected: u32,
+    timeout: Io.Timeout,
+) Io.Cancelable!void {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+
+    switch (timeout) {
+        .none => {},
+        // Timed waits are not supported right now, report as a spurious wakeup.
+        .deadline, .duration => return,
+    }
+
+    rio.block(.{ .futex = .{
+        .ptr = ptr,
+        .expected = expected,
+        .cancelation = .unblocked,
+        .wait_list_node = .{},
+    } });
+
+    switch (rio.waitPoint().awaitee.futex.cancelation) {
+        .blocked => unreachable,
+        .unblocked => {},
+        .canceled => {
+            debug.assert(rio.current_coro.?.state == .cancel_requested);
+            rio.current_coro.?.state = .cancel_acknowledged;
+            return error.Canceled;
+        },
+    }
+}
+
+fn futexWaitUncancelable(userdata: ?*anyopaque, ptr: *const u32, expected: u32) void {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+
+    rio.block(.{ .futex = .{
+        .ptr = ptr,
+        .expected = expected,
+        .cancelation = .blocked,
+        .wait_list_node = .{},
+    } });
+}
+
+fn futexWake(userdata: ?*anyopaque, ptr: *const u32, max_waiters: u32) void {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    if (max_waiters == 0) return;
+
+    var waiters: u32 = max_waiters;
+
+    var next = rio.wait_list.first;
+    while (next) |node| {
+        next = node.next;
+
+        const futex: *WaitPoint.Awaitee.Futex = @alignCast(@fieldParentPtr(
+            "wait_list_node",
+            node,
+        ));
+
+        if (futex.ptr != ptr) continue;
+
+        const awaitee: *WaitPoint.Awaitee = @alignCast(@fieldParentPtr("futex", futex));
+        const wait_point: *WaitPoint = @alignCast(@fieldParentPtr("awaitee", awaitee));
+
+        rio.wait_list.remove(node);
+        rio.schedule(wait_point);
+
+        waiters = switch (waiters) {
+            1 => break,
+            else => waiters - 1,
+        };
+    }
+
+    rio.schedule(rio.waitPoint()); // schedule self at last.
+    rio.block(.yield);
 }
 
 fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Operation.Result {
@@ -498,6 +597,20 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
         },
         // TODO: should it propagate cancelation request?
         .idle, .none, .coroutine => {},
+
+        .futex => |*futex| switch (futex.cancelation) {
+            .blocked => {},
+            .unblocked => {
+                futex.cancelation = .canceled;
+
+                const awaitee: *WaitPoint.Awaitee = @alignCast(@fieldParentPtr("futex", futex));
+                const wait_point: *WaitPoint = @alignCast(@fieldParentPtr("awaitee", awaitee));
+
+                rio.wait_list.remove(&futex.wait_list_node);
+                rio.schedule(wait_point);
+            },
+            .canceled => unreachable, // always a race condition
+        },
     }
 
     rio.block(.{ .await = coro });
@@ -1139,22 +1252,31 @@ const WaitReason = union(enum) {
     submission,
     await: *Coroutine,
     shutdown,
+    futex: WaitPoint.Awaitee.Futex,
+    yield,
 };
 
 fn block(rio: *RemiellIo, reason: WaitReason) void {
     const enter_wait_point = rio.waitPoint();
 
-    enter_wait_point.awaitee = switch (reason) {
+    switch (reason) {
         // Coroutine has finished execution
-        .idle => .idle,
+        .idle => enter_wait_point.awaitee = .idle,
 
-        .shutdown => .idle,
+        .shutdown => enter_wait_point.awaitee = .idle,
 
         // A new operation submitted by coroutine.
-        .submission => enter_wait_point.awaitee, // unchanged
+        .submission => {}, // unchanged
 
-        .await => |coro| .{ .coroutine = coro },
-    };
+        .await => |coro| enter_wait_point.awaitee = .{ .coroutine = coro },
+
+        .futex => |futex| {
+            enter_wait_point.awaitee = .{ .futex = futex };
+            rio.wait_list.append(&enter_wait_point.awaitee.futex.wait_list_node);
+        },
+
+        .yield => enter_wait_point.awaitee = .none,
+    }
 
     wait_loop: while (true) {
         if (rio.shutdown == .pending) {
