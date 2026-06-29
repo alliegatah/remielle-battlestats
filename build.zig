@@ -91,6 +91,7 @@ pub fn build(b: *Build) void {
             .root_source_file = b.path("sdksv/src/main.zig"),
             .imports = &.{
                 .{ .name = "rmio", .module = rmio },
+                .{ .name = "rmmem", .module = rmmem },
                 .{ .name = "rmcli", .module = rmcli },
                 .{ .name = "rmcrypt", .module = rmcrypt },
             },
@@ -98,6 +99,8 @@ pub fn build(b: *Build) void {
             .optimize = optimize,
         }),
     });
+
+    StaticAsset.addAll(b, sdksv.root_module, sdksv_assets);
 
     const gamesv = b.addExecutable(.{
         .name = "remielle-gamesv",
@@ -223,6 +226,10 @@ const gamesv_assets: []const StaticAsset = &.{
 
 const dpsv_assets: []const StaticAsset = &.{
     .asset("config", "dpsv/config.zon"),
+};
+
+const sdksv_assets: []const StaticAsset = &.{
+    .asset("config", "sdksv/config.zon"),
 };
 
 fn filesReadable(io: Io, dir: Io.Dir, path_list: []const []const u8) bool {
