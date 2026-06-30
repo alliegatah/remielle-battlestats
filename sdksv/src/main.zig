@@ -43,7 +43,7 @@ pub fn main(init: Init.Minimal) void {
     var io_impl = if (rmio.RemiellIo.supported)
         rmio.RemiellIo.init(heap.page_allocator, .{
             .coroutine_limit = concurrency_units,
-            .stack_size = 1024 * 128,
+            .stack_size = 1024 * 512,
         }) catch |err|
             fatal("failed to init I/O implementation: {t}", .{err})
     else
