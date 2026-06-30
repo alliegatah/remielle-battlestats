@@ -415,17 +415,11 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
 
             const message = &o.message_buffer[0];
 
-            const point = rio.waitPoint();
-
-            try rio.syscall(.{ .net_receive = .{
+            const bytes_received = rio.syscall(.net_receive, .{
                 .socket_handle = o.socket_handle,
                 .from = &message.from,
                 .buffer = o.data_buffer,
-            } });
-
-            const bytes_received = rio.unblock(
-                point.awaitee.operation.primary.storage.completion.result.net_receive,
-            ) catch |err| switch (err) {
+            }) catch |err| switch (err) {
                 error.Canceled => |e| return e,
                 else => |e| return .{ .net_receive = .{ e, 0 } },
             };
@@ -439,12 +433,14 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
             const iovecs_capacity = if (Operation.FileWrite.vectored) 8 else 0;
             var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"const") = undefined;
 
-            if (!try rio.fileWrite(&iovecs_buffer, o.file.handle, .streaming, o.header, o.data, o.splat))
-                return .{ .file_write_streaming = 0 };
-
             return .{
-                .file_write_streaming = rio.unblock(
-                    rio.waitPoint().awaitee.operation.primary.storage.completion.result.file_write,
+                .file_write_streaming = rio.fileWrite(
+                    &iovecs_buffer,
+                    o.file.handle,
+                    .streaming,
+                    o.header,
+                    o.data,
+                    o.splat,
                 ) catch |err| switch (err) {
                     error.Unseekable => unreachable, // streaming
                     error.Canceled => |e| return e,
@@ -457,11 +453,12 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
             const iovecs_capacity = if (Operation.FileRead.vectored) 8 else 0;
             var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"var") = undefined;
 
-            try rio.fileRead(&iovecs_buffer, o.file.handle, .streaming, o.data);
-
             return .{
-                .file_read_streaming = rio.unblock(
-                    rio.waitPoint().awaitee.operation.primary.storage.completion.result.file_read,
+                .file_read_streaming = rio.fileRead(
+                    &iovecs_buffer,
+                    o.file.handle,
+                    .streaming,
+                    o.data,
                 ) catch |err| switch (err) {
                     error.Unseekable => unreachable, // streaming
                     error.Canceled => |e| return e,
@@ -711,16 +708,13 @@ fn netSendOne(
 ) net.Socket.SendError!void {
     _ = flags;
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .net_send = .{
+    if (rio.syscall(.net_send, .{
         .socket_handle = socket_handle,
         .to = message.address,
         .buffer = message.data_ptr[0..message.data_len],
-    } });
-
-    if (rio.unblock(point.awaitee.operation.primary.storage.completion.result.net_send)) |n_sent|
-        message.data_len = n_sent
-    else |err| {
+    })) |n_sent| {
+        message.data_len = n_sent;
+    } else |err| {
         message.data_len = 0;
         return err;
     }
@@ -740,16 +734,12 @@ fn netAccept(
     listener: net.Socket.Handle,
     options: net.Server.AcceptOptions,
 ) net.Server.AcceptError!net.Socket {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
     _ = options;
 
-    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
-
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .net_accept = .{
+    return rio.syscall(.net_accept, .{
         .listener_handle = listener,
-    } });
-
-    return rio.unblock(point.awaitee.operation.primary.storage.completion.result.net_accept);
+    });
 }
 
 fn netRead(
@@ -759,13 +749,10 @@ fn netRead(
 ) net.Stream.Reader.Error!usize {
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .net_read = .{
+    return rio.syscall(.net_read, .{
         .stream_handle = socket,
         .buffer = data[0],
-    } });
-
-    return rio.unblock(point.awaitee.operation.primary.storage.completion.result.net_read);
+    });
 }
 
 fn netWrite(
@@ -810,13 +797,10 @@ fn netWrite(
         },
     };
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .net_write = .{
+    return rio.syscall(.net_write, .{
         .stream_handle = socket,
         .data = iovecs[0..iovecs_count],
-    } });
-
-    return rio.unblock(point.awaitee.operation.primary.storage.completion.result.net_write);
+    });
 }
 
 fn random(userdata: ?*anyopaque, buffer: []u8) void {
@@ -922,20 +906,6 @@ fn checkCancel(userdata: ?*anyopaque) Io.Cancelable!void {
         try coro.cancelation.acknowledge();
 }
 
-fn unblock(rio: *RemiellIo, result: anytype) @TypeOf(result) {
-    // TODO: move this inside of `syscall`.
-
-    _ = result catch |err| switch (err) {
-        error.Canceled => {
-            try rio.current_coro.?.cancelation.acknowledge();
-            unreachable; // `acknowledge` must return `error.Canceled`
-        },
-        else => {},
-    };
-
-    return result;
-}
-
 fn swapCancelProtection(userdata: ?*anyopaque, protection: Io.CancelProtection) Io.CancelProtection {
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
 
@@ -965,14 +935,11 @@ fn dirOpenFile(
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .dir_open_file = .{
+    const handle = try rio.syscall(.dir_open_file, .{
         .dir_handle = dir.handle,
         .sub_path = &path_buffer,
         .options = options,
-    } });
-
-    const handle = try rio.unblock(point.awaitee.operation.primary.storage.completion.result.dir_open_file);
+    });
 
     return .{
         .handle = handle,
@@ -991,10 +958,11 @@ fn fileReadPositional(
     const iovecs_capacity = if (Operation.FileRead.vectored) 8 else 0;
     var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"var") = undefined;
 
-    try rio.fileRead(&iovecs_buffer, file.handle, .{ .positional = offset }, data);
-
-    return rio.unblock(
-        rio.waitPoint().awaitee.operation.primary.storage.completion.result.file_read,
+    return rio.fileRead(
+        &iovecs_buffer,
+        file.handle,
+        .{ .positional = offset },
+        data,
     ) catch |err| switch (err) {
         error.ConnectionResetByPeer,
         error.SocketUnconnected,
@@ -1024,14 +992,11 @@ fn dirCreateDir(
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .create_dir = .{
+    return rio.syscall(.create_dir, .{
         .at = dir.handle,
         .sub_path = &path_buffer,
         .permissions = permissions,
-    } });
-
-    return rio.unblock(point.awaitee.operation.primary.storage.completion.result.create_dir);
+    });
 }
 
 fn dirCreateDirPath(
@@ -1070,14 +1035,11 @@ fn dirCreateFile(
     var path_buffer: Impl.PathBuffer = undefined;
     try path_buffer.initPinned(dir.handle, sub_path);
 
-    const point = rio.waitPoint();
-    try rio.syscall(.{ .dir_create_file = .{
+    const handle = try rio.syscall(.dir_create_file, .{
         .at = dir.handle,
         .sub_path = &path_buffer,
         .options = options,
-    } });
-
-    const handle = try rio.unblock(point.awaitee.operation.primary.storage.completion.result.dir_create_file);
+    });
 
     return .{
         .handle = handle,
@@ -1097,10 +1059,8 @@ fn fileWritePositional(
 
     const iovecs_capacity = if (Operation.FileWrite.vectored) 8 else 0;
     var iovecs_buffer: [iovecs_capacity]Impl.Vector(.@"const") = undefined;
-    if (!try rio.fileWrite(&iovecs_buffer, file.handle, .{ .positional = offset }, header, data, splat))
-        return 0;
 
-    return rio.unblock(rio.waitPoint().awaitee.operation.primary.storage.completion.result.file_write);
+    return try rio.fileWrite(&iovecs_buffer, file.handle, .{ .positional = offset }, header, data, splat);
 }
 
 fn fileWrite(
@@ -1111,7 +1071,7 @@ fn fileWrite(
     header: []const u8,
     data: []const []const u8,
     splat: usize,
-) Io.Cancelable!bool {
+) Operation.FileWrite.Result {
     var iovecs_count: usize = 0;
 
     if (Operation.FileWrite.vectored) {
@@ -1125,13 +1085,13 @@ fn fileWrite(
             addVector(.@"const", iovecs_buffer, &iovecs_count, pattern);
 
         if (iovecs_count == 0)
-            return false;
+            return 0;
 
-        try rio.syscall(.{ .file_write = .{
+        return rio.syscall(.file_write, .{
             .file_handle = file,
             .mode = mode,
             .data = iovecs_buffer[0..iovecs_count],
-        } });
+        });
     } else {
         const buffer: []const u8 = buffer: {
             if (header.len != 0) break :buffer header;
@@ -1141,19 +1101,17 @@ fn fileWrite(
 
             const pattern = data[data.len - 1];
             if (pattern.len == 0 or splat == 0)
-                return false;
+                return 0;
 
             break :buffer data[data.len - 1];
         };
 
-        try rio.syscall(.{ .file_write = .{
+        return rio.syscall(.file_write, .{
             .file_handle = file,
             .mode = mode,
             .data = buffer,
-        } });
+        });
     }
-
-    return true;
 }
 
 fn fileRead(
@@ -1162,7 +1120,7 @@ fn fileRead(
     file: Io.File.Handle,
     mode: FileOperationMode,
     data: []const []u8,
-) Io.Cancelable!void {
+) Operation.FileRead.Result {
     var iovecs_count: usize = 0;
 
     if (Operation.FileRead.vectored) {
@@ -1170,14 +1128,14 @@ fn fileRead(
             addVector(.@"var", iovecs_buffer, &iovecs_count, buf);
     }
 
-    try rio.syscall(.{ .file_read = .{
+    return rio.syscall(.file_read, .{
         .file_handle = file,
         .mode = mode,
         .data = if (Operation.FileRead.vectored)
             iovecs_buffer[0..iovecs_count]
         else
             data[0],
-    } });
+    });
 }
 
 fn waitPoint(rio: *RemiellIo) *WaitPoint {
@@ -1210,7 +1168,11 @@ const YieldReason = union(enum) {
 };
 
 /// Simulates the behavior of an interruptible system call.
-fn syscall(rio: *RemiellIo, op: Operation) Io.Cancelable!void {
+fn syscall(
+    rio: *RemiellIo,
+    comptime op: Operation.Tag,
+    param: @FieldType(Operation, @tagName(op)),
+) @TypeOf(param).Result {
     if (rio.current_coro) |current_coro|
         try current_coro.cancelation.acknowledge();
 
@@ -1221,7 +1183,7 @@ fn syscall(rio: *RemiellIo, op: Operation) Io.Cancelable!void {
             .outstanding = 1,
             .primary = .{
                 .tag = 0, // Primary
-                .storage = .init(op),
+                .storage = .init(@unionInit(Operation, @tagName(op), param)),
             },
             .cancelation = .{
                 .tag = 1, // Cancelation
@@ -1231,8 +1193,18 @@ fn syscall(rio: *RemiellIo, op: Operation) Io.Cancelable!void {
     };
 
     rio.impl.submissions.append(&wp.awaitee.operation.primary.storage.submission.node);
-
     rio.yield(.wait_for_io);
+
+    return @field(
+        wp.awaitee.operation.primary.storage.completion.result,
+        @tagName(op),
+    ) catch |err| switch (err) {
+        error.Canceled => {
+            try rio.current_coro.?.cancelation.acknowledge();
+            unreachable; // `acknowledge` must return `error.Canceled`
+        },
+        else => |e| e,
+    };
 }
 
 /// Yield the execution.
