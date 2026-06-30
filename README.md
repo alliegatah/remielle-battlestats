@@ -13,9 +13,7 @@ We also maintain an in-house implementation of `protobuf` serializer and compile
 To build **Remielle** from sources you need:
 - Zig Compiler, version `0.16.0`: [Linux](https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz)/[Windows](https://ziglang.org/download/0.16.0/zig-x86_64-windows-0.16.0.zip)
 
-For use with the game client, the following run-time dependencies are required:
-- An SDK Server implementation: [hoyo-sdk](https://git.xeondev.com/reversedrooms/hoyo-sdk/releases/tag/0.2) ([see tracking issue for making hoyo-sdk optional](https://git.xeondev.com/remielle/remielle/issues/29))
-- Client patch: [vortex](https://git.xeondev.com/ESD/vortex) (a replacement is being worked on as well)
+For use with the game client, the client patch is required: [vortex](https://git.xeondev.com/ESD/vortex) (a replacement is being worked on)
 
 #### Currently supported client version: `CNBetaWin3.1.3`, it can be found in our [discord server](https://discord.xeondev.com/)
 
