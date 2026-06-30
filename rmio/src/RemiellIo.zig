@@ -64,11 +64,8 @@ const WaitPoint = struct {
         futex: Futex,
         /// The coroutine is waiting for an I/O operation to complete.
         operation: struct {
-            /// How many of those below are pending
+            /// How many operations are in-flight for this coroutine.
             outstanding: u2,
-
-            primary: Operation.Storage.Tagged,
-            cancelation: Operation.Storage.Tagged,
         },
         /// The coroutine is waiting for another coroutine to exit.
         coroutine: *Coroutine,
@@ -402,7 +399,7 @@ fn futexWake(userdata: ?*anyopaque, ptr: *const u32, max_waiters: u32) void {
 
     const point = rio.waitPoint();
     rio.schedule(point); // schedule self at last.
-    rio.yield(.none);
+    rio.yield(.handoff);
 }
 
 fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Operation.Result {
@@ -557,16 +554,15 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
     coro.cancelation.request();
 
     switch (coro.wait_point.awaitee) {
-        .operation => |*o| {
-            // If it's blocked waiting on an `Operation`,
-            // submit a cancelation request for it.
-            o.outstanding += 1;
-            o.cancelation.storage = .init(.{ .cancel = .{
-                .operation = &o.primary.storage,
-            } });
-
-            rio.impl.submissions.append(&o.cancelation.storage.submission.node);
+        .operation => |o| switch (o.outstanding) {
+            // Nothing to do. The task is already scheduled since its operation is complete.
+            0 => {},
+            // Cause a "spurious" wakeup, letting it handle the cancelation request.
+            // This mechanism is similar to EINTR.
+            1 => rio.schedule(&coro.wait_point),
+            else => unreachable,
         },
+
         // TODO: should it propagate cancelation request?
         .idle, .shutdown, .none, .coroutine => {},
 
@@ -1164,10 +1160,10 @@ const YieldReason = union(enum) {
     futex: WaitPoint.Awaitee.Futex,
 
     /// The coroutine is cooperatively handing CPU time to other coroutines.
-    none: void,
+    handoff: void,
 };
 
-/// Simulates the behavior of an interruptible system call.
+/// Performs one synchronous (in relation to coroutine) I/O operation.
 fn syscall(
     rio: *RemiellIo,
     comptime op: Operation.Tag,
@@ -1178,28 +1174,53 @@ fn syscall(
 
     const wp = rio.waitPoint();
 
-    wp.awaitee = .{
-        .operation = .{
-            .outstanding = 1,
-            .primary = .{
-                .tag = 0, // Primary
-                .storage = .init(@unionInit(Operation, @tagName(op), param)),
-            },
-            .cancelation = .{
-                .tag = 1, // Cancelation
-                .storage = undefined, // Populated by `cancel`.
-            },
-        },
+    var operation: Operation.Storage.WithAwaiter = .{
+        .wait_point = wp,
+        .storage = .init(@unionInit(Operation, @tagName(op), param)),
     };
 
-    rio.impl.submissions.append(&wp.awaitee.operation.primary.storage.submission.node);
+    var cancelation: Operation.Storage.WithAwaiter = .{
+        .wait_point = wp,
+        .storage = .init(.{ .cancel = .{ .operation = &operation.storage } }),
+    };
+
+    wp.awaitee = .{
+        .operation = .{ .outstanding = 1 },
+    };
+
+    const outstanding = &wp.awaitee.operation.outstanding;
+
+    rio.impl.submissions.append(&operation.storage.submission.node);
+
     rio.yield(.wait_for_io);
 
+    if (outstanding.* == 0) {
+        // Operation completed normally, we're done here.
+        return @field(
+            operation.storage.completion.result,
+            @tagName(op),
+        ) catch |err| switch (err) {
+            error.Canceled => unreachable, // nobody asked for it
+            else => |e| e,
+        };
+    }
+
+    // Otherwise this is an early wakeup due to the cancelation.
+    debug.assert(outstanding.* == 1); // always a race condition
+
+    outstanding.* = 2;
+    rio.impl.submissions.append(&cancelation.storage.submission.node);
+    rio.yield(.wait_for_io);
+
+    // Now we should be switched to only because outstanding ops are done.
+    debug.assert(outstanding.* == 0); // always a race condition
+
     return @field(
-        wp.awaitee.operation.primary.storage.completion.result,
+        operation.storage.completion.result,
         @tagName(op),
     ) catch |err| switch (err) {
         error.Canceled => {
+            // The operation was successfully canceled, acknowledge the task-level cancelation.
             try rio.current_coro.?.cancelation.acknowledge();
             unreachable; // `acknowledge` must return `error.Canceled`
         },
@@ -1223,7 +1244,7 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
             enter_wait_point.awaitee = .{ .futex = futex };
             rio.wait_list.append(&enter_wait_point.awaitee.futex.wait_list_node);
         },
-        .none => {},
+        .handoff => {},
     }
 
     wait_loop: while (true) {
@@ -1248,23 +1269,13 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
 
         while (rio.impl.completions.popFirst()) |node| {
             const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
-            const storage = completion.parentPtr(Operation.Storage.Tagged, "storage");
+            const storage = completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
 
-            const awaitee: *@FieldType(WaitPoint.Awaitee, "operation") = switch (storage.tag) {
-                0 => @alignCast(@fieldParentPtr("primary", storage)),
-                1 => @alignCast(@fieldParentPtr("cancelation", storage)),
-                else => unreachable,
-            };
+            const outstanding = &storage.wait_point.awaitee.operation.outstanding;
+            outstanding.* -= 1;
+            if (outstanding.* != 0) continue; // Some operations are still pending.
 
-            awaitee.outstanding -= 1;
-            if (awaitee.outstanding != 0) continue; // Some operations are still pending.
-
-            const wait_point: *WaitPoint = @alignCast(@fieldParentPtr(
-                "awaitee",
-                @as(*WaitPoint.Awaitee, @fieldParentPtr("operation", awaitee)),
-            ));
-
-            rio.schedule(wait_point);
+            rio.schedule(storage.wait_point);
         }
     }
 }
@@ -1467,8 +1478,8 @@ pub const Operation = union(enum) {
 
     /// This structure must be pinned.
     pub const Storage = union {
-        pub const Tagged = struct {
-            tag: u32,
+        pub const WithAwaiter = struct {
+            wait_point: *WaitPoint,
             storage: Storage,
         };
 
