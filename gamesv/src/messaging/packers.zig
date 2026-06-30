@@ -232,7 +232,7 @@ pub fn packQuickTeamData(arena: Allocator, quick_teams: []const QuickTeam.Meta) 
 pub fn packQuickTeamSync(arena: Allocator, quick_teams: []const logic.Changes.QuickTeam) !pb.QuickTeamSync {
     var quick_team_list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, quick_teams.len);
 
-    for (quick_teams) |quick_team| {
+    for (quick_teams) |*quick_team| {
         var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
         for (quick_team.meta.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(avatar_id) });
 
