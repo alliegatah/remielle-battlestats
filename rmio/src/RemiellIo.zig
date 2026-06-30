@@ -553,7 +553,7 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
     coro.awaiter = rio.waitPoint();
     coro.cancelation.request();
 
-    switch (coro.wait_point.awaitee) {
+    if (coro.cancelation.protection == .unblocked) switch (coro.wait_point.awaitee) {
         .operation => |o| switch (o.outstanding) {
             // Nothing to do. The task is already scheduled since its operation is complete.
             0 => {},
@@ -579,7 +579,7 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
             },
             .canceled => unreachable, // always a race condition
         },
-    }
+    };
 
     rio.yield(.{ .join = .{ .awaitee = coro } });
 }
