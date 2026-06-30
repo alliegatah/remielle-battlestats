@@ -677,6 +677,21 @@ fn recancel(userdata: ?*anyopaque) void {
     }
 }
 
+fn fileClose(userdata: ?*anyopaque, files: []const Io.File) void {
+    // Only linux can batch `close(2)`.
+    if (native_os != .linux) {
+        for (files) |file| switch (native_os) {
+            .windows => _ = Impl.NtClose(file.handle),
+            else => _ = posix.system.close(file.handle),
+        };
+
+        return;
+    }
+
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    rio.closeMany(Io.File, files);
+}
+
 fn netClose(userdata: ?*anyopaque, handles: []const net.Socket.Handle) void {
     // Only linux can batch `close(2)`.
     if (native_os != .linux) {
@@ -689,6 +704,10 @@ fn netClose(userdata: ?*anyopaque, handles: []const net.Socket.Handle) void {
     }
 
     const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    rio.closeMany(net.Socket.Handle, handles);
+}
+
+fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
     const maybe_coro = rio.current_coro;
     const wp = rio.waitPoint();
 
@@ -704,15 +723,21 @@ fn netClose(userdata: ?*anyopaque, handles: []const net.Socket.Handle) void {
 
     // Can batch up to this amount of `close` operations within a single syscall.
     var operations: [16]Operation.Storage.WithAwaiter = undefined;
-    var cursor = handles;
+    var cursor = list;
 
     while (cursor.len != 0) {
         const oneshot_size = @min(operations.len, cursor.len);
         defer cursor = cursor[oneshot_size..];
 
-        for (operations[0..oneshot_size], cursor[0..oneshot_size]) |*op, handle| {
+        for (operations[0..oneshot_size], cursor[0..oneshot_size]) |*op, entry| {
             op.* = .{ .wait_point = wp, .storage = .init(
-                .{ .close = .{ .handle = handle } },
+                .{ .close = .{
+                    .handle = switch (T) {
+                        net.Socket.Handle => entry,
+                        Io.File => entry.handle,
+                        else => comptime unreachable,
+                    },
+                } },
             ) };
 
             rio.impl.submissions.append(&op.storage.submission.node);
@@ -1016,15 +1041,6 @@ fn fileReadPositional(
         error.EndOfStream,
         => unreachable, // positional
         else => |e| e,
-    };
-}
-
-fn fileClose(userdata: ?*anyopaque, files: []const Io.File) void {
-    _ = userdata;
-
-    for (files) |file| switch (native_os) {
-        .windows => _ = Impl.NtClose(file.handle),
-        else => _ = std.posix.system.close(file.handle),
     };
 }
 
