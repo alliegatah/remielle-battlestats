@@ -573,6 +573,7 @@ fn drainSubmitted(iocp: *Iocp) void {
                     },
                 });
             },
+            .close => unreachable,
         }
     }
 }

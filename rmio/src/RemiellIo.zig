@@ -65,7 +65,12 @@ const WaitPoint = struct {
         /// The coroutine is waiting for an I/O operation to complete.
         operation: struct {
             /// How many operations are in-flight for this coroutine.
-            outstanding: u2,
+            outstanding: u32,
+            status: enum {
+                waiting_for_one_or_more,
+                waiting_for_all,
+                scheduled,
+            },
         },
         /// The coroutine is waiting for another coroutine to exit.
         coroutine: *Coroutine,
@@ -673,11 +678,54 @@ fn recancel(userdata: ?*anyopaque) void {
 }
 
 fn netClose(userdata: ?*anyopaque, handles: []const net.Socket.Handle) void {
-    _ = userdata;
-    for (handles) |socket| switch (native_os) {
-        .windows => _ = Impl.closesocket(socket),
-        else => _ = std.posix.system.close(socket),
+    // Only linux can batch `close(2)`.
+    if (native_os != .linux) {
+        for (handles) |handle| switch (native_os) {
+            .windows => _ = Impl.closesocket(handle),
+            else => _ = posix.system.close(handle),
+        };
+
+        return;
+    }
+
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const maybe_coro = rio.current_coro;
+    const wp = rio.waitPoint();
+
+    // resource deallocation must succeed.
+    const old_cancelation_protection: Io.CancelProtection = if (maybe_coro) |coro|
+        coro.cancelation.swapProtection(.blocked)
+    else
+        undefined;
+
+    defer if (maybe_coro) |coro| {
+        _ = coro.cancelation.swapProtection(old_cancelation_protection);
     };
+
+    // Can batch up to this amount of `close` operations within a single syscall.
+    var operations: [16]Operation.Storage.WithAwaiter = undefined;
+    var cursor = handles;
+
+    while (cursor.len != 0) {
+        const oneshot_size = @min(operations.len, cursor.len);
+        defer cursor = cursor[oneshot_size..];
+
+        for (operations[0..oneshot_size], cursor[0..oneshot_size]) |*op, handle| {
+            op.* = .{ .wait_point = wp, .storage = .init(
+                .{ .close = .{ .handle = handle } },
+            ) };
+
+            rio.impl.submissions.append(&op.storage.submission.node);
+        }
+
+        wp.awaitee = .{ .operation = .{
+            .outstanding = @intCast(oneshot_size),
+            .status = .waiting_for_all,
+        } };
+
+        rio.yield(.wait_for_io);
+        debug.assert(wp.awaitee.operation.outstanding == 0);
+    }
 }
 
 fn netBindIp(
@@ -1187,17 +1235,18 @@ fn syscall(
         .storage = .init(.{ .cancel = .{ .operation = &operation.storage } }),
     };
 
-    wp.awaitee = .{
-        .operation = .{ .outstanding = 1 },
-    };
+    wp.awaitee = .{ .operation = .{
+        .outstanding = 1,
+        .status = .waiting_for_all,
+    } };
 
-    const outstanding = &wp.awaitee.operation.outstanding;
+    const wait = &wp.awaitee.operation;
 
     rio.impl.submissions.append(&operation.storage.submission.node);
 
     rio.yield(.wait_for_io);
 
-    if (outstanding.* == 0) {
+    if (wait.outstanding == 0) {
         // Operation completed normally, we're done here.
         return @field(
             operation.storage.completion.result,
@@ -1209,14 +1258,18 @@ fn syscall(
     }
 
     // Otherwise this is an early wakeup due to the cancelation.
-    debug.assert(outstanding.* == 1); // always a race condition
+    debug.assert(wait.outstanding == 1); // always a race condition
 
-    outstanding.* = 2;
+    wait.* = .{
+        .outstanding = 2,
+        .status = .waiting_for_all,
+    };
+
     rio.impl.submissions.append(&cancelation.storage.submission.node);
     rio.yield(.wait_for_io);
 
     // Now we should be switched to only because outstanding ops are done.
-    debug.assert(outstanding.* == 0); // always a race condition
+    debug.assert(wait.outstanding == 0); // always a race condition
 
     return @field(
         operation.storage.completion.result,
@@ -1274,11 +1327,20 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
             const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
             const storage = completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
 
-            const outstanding = &storage.wait_point.awaitee.operation.outstanding;
-            outstanding.* -= 1;
-            if (outstanding.* != 0) continue; // Some operations are still pending.
+            const wait = &storage.wait_point.awaitee.operation;
+            wait.outstanding -= 1;
 
-            rio.schedule(storage.wait_point);
+            switch (wait.status) {
+                .scheduled => {}, // already
+                .waiting_for_one_or_more => {
+                    wait.status = .scheduled;
+                    rio.schedule(storage.wait_point);
+                },
+                .waiting_for_all => if (wait.outstanding == 0) {
+                    wait.status = .scheduled;
+                    rio.schedule(storage.wait_point);
+                },
+            }
         }
     }
 }
@@ -1340,6 +1402,7 @@ pub const Operation = union(enum) {
     create_dir: CreateDir,
     dir_create_file: DirCreateFile,
     file_write: FileWrite,
+    close: Close,
 
     pub const NetAccept = struct {
         listener_handle: Io.net.Socket.Handle,
@@ -1464,6 +1527,14 @@ pub const Operation = union(enum) {
             Io.Cancelable;
 
         pub const Result = Error!usize;
+    };
+
+    pub const Close = switch (native_os) {
+        .linux => struct {
+            handle: Io.File.Handle,
+            pub const Result = void;
+        },
+        else => noreturn,
     };
 
     pub const Tag = @typeInfo(Operation).@"union".tag_type.?;

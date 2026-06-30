@@ -293,6 +293,16 @@ fn drainSubmitted(u: *Uring) void {
 
                 u.outstanding += 1;
             },
+            .close => |close| {
+                _ = setUserdata(storage, .close);
+
+                _ = u.ring.close(
+                    @intFromPtr(storage),
+                    close.handle,
+                ) catch unreachable;
+
+                u.outstanding += 1;
+            },
         }
     }
 }
@@ -534,6 +544,12 @@ fn fillCompleted(u: *Uring) void {
 
                 u.outstanding -= 1;
             },
+            .close => |*close| {
+                _ = close;
+
+                u.completeOne(storage, .{ .close = {} });
+                u.outstanding -= 1;
+            },
         }
     }
 }
@@ -572,6 +588,7 @@ const RingUserdata = union(enum) {
     create_dir: void,
     dir_create_file: void,
     file_write: void,
+    close: void,
 };
 
 fn setUserdata(storage: *Operation.Storage, userdata: RingUserdata) *RingUserdata {
