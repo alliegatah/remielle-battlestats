@@ -62,7 +62,9 @@ pub const PrivateKey = struct {
         const modulus = Modulus.fromBytes(&key.modulus, .big) catch unreachable;
         const exponent = Modulus.Fe.fromBytes(modulus, &key.private_exponent, .big) catch unreachable;
 
-        const int = Modulus.Fe.fromBytes(modulus, ciphertext, .big) catch unreachable;
+        const int = Modulus.Fe.fromBytes(modulus, ciphertext, .big) catch
+            return null;
+
         const plaintext = modulus.pow(int, exponent) catch unreachable;
         plaintext.toBytes(out, .big) catch unreachable;
 
