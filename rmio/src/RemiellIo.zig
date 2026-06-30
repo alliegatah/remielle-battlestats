@@ -340,6 +340,9 @@ fn futexWait(
         .deadline, .duration => return,
     }
 
+    if (rio.current_coro) |coro|
+        try coro.cancelation.acknowledge();
+
     rio.yield(.{ .futex = .{
         .ptr = ptr,
         .expected = expected,
