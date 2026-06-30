@@ -4,6 +4,7 @@ pub const Buddy = @import("Properties/Buddy.zig");
 pub const Weapon = @import("Properties/Weapon.zig");
 pub const Equipment = @import("Properties/Equipment.zig");
 pub const Hall = @import("Properties/Hall.zig");
+pub const QuickTeam = @import("Properties/QuickTeam.zig");
 
 basic_info: BasicInfo,
 player_accessory: PlayerAccessory,
@@ -13,6 +14,7 @@ weapon: Weapon,
 equip: Equipment,
 hall: Hall,
 main_city_time: MainCityTime,
+quick_team: QuickTeam,
 
 pub const List = rmmem.RemielleArrayList(
     rmmem.suggestBucketSize(64, Properties),
@@ -31,6 +33,7 @@ pub fn setDefaultsAt(list: *List, time: Io.Timestamp, at: Player) void {
     list.getPtr(.equip, index).* = .init;
     list.getPtr(.hall, index).* = .init;
     list.getPtr(.main_city_time, index).* = .init;
+    list.getPtr(.quick_team, index).* = .init;
 
     unlockAllAvatars(list, at);
     applyAvatarOverrides(list, at);
@@ -682,6 +685,24 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .day_of_week = @intFromEnum(main_city_time.day_of_week),
     };
 
+    const quick_team = props.getPtr(.quick_team, index);
+    var quick_team_save: pb.QuickTeamSave = .{
+        .teams = try .initCapacity(arena, QuickTeam.slots),
+    };
+
+    for (&quick_team.meta) |*meta| {
+        const team = quick_team_save.teams.addOneAssumeCapacity();
+
+        team.* = .{
+            .name = meta.name.view(),
+            .avatar_ids = try .initCapacity(arena, Properties.QuickTeam.avatar_slots),
+            .buddy_id = @intFromEnum(meta.buddy_id),
+        };
+
+        for (meta.avatar_ids) |avatar_id|
+            team.avatar_ids.appendAssumeCapacity(@intFromEnum(avatar_id));
+    }
+
     return .{
         .basic = basic_save,
         .player_accessory = player_accessory_save,
@@ -691,6 +712,7 @@ pub fn toPlayerSave(props: *Properties.List, arena: Allocator, player: Player) A
         .equip = equip_save,
         .hall = hall_save,
         .main_city_time = main_city_time_save,
+        .quick_team = quick_team_save,
     };
 }
 
@@ -858,6 +880,26 @@ pub fn fromPlayerSave(
         .time_in_minutes = @truncate(main_city_time_save.time_in_minutes),
         .day_of_week = @enumFromInt(main_city_time_save.day_of_week),
     } else .init;
+
+    if (save.quick_team) |quick_team_save| {
+        const quick_team = props.getPtr(.quick_team, index);
+
+        for (quick_team_save.teams.items, 0..) |team, i| {
+            quick_team.meta[i] = .{
+                .name = try .fromSlice(team.name),
+                .avatar_ids = @splat(.none),
+                .buddy_id = @enumFromInt(team.buddy_id),
+            };
+
+            const count = @min(QuickTeam.avatar_slots, team.avatar_ids.items.len);
+            @memcpy(
+                @as([*]u32, @ptrCast(&quick_team.meta[i].avatar_ids))[0..count],
+                team.avatar_ids.items[0..count],
+            );
+        }
+    } else {
+        props.getPtr(.quick_team, index).* = .init;
+    }
 }
 
 const Io = std.Io;

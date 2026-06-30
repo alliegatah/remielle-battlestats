@@ -72,6 +72,7 @@ pub const PlayerSave = struct {
     buddy: ?BuddySave = null,
     hall: ?HallSave = null,
     main_city_time: ?MainCityTimeSave = null,
+    quick_team: ?QuickTeamSave = null,
     player_accessory: ?PlayerAccessorySave = null,
     pub const basic_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const avatar_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
@@ -80,6 +81,7 @@ pub const PlayerSave = struct {
     pub const buddy_field_desc: FieldDesc = .{ .number = 5, .xor = 0 };
     pub const hall_field_desc: FieldDesc = .{ .number = 6, .xor = 0 };
     pub const main_city_time_field_desc: FieldDesc = .{ .number = 8, .xor = 0 };
+    pub const quick_team_field_desc: FieldDesc = .{ .number = 9, .xor = 0 };
     pub const player_accessory_field_desc: FieldDesc = .{ .number = 10, .xor = 0 };
 };
 
@@ -266,4 +268,22 @@ pub const MainCityTimeSave = struct {
     day_of_week: u32 = 0,
     pub const time_in_minutes_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
     pub const day_of_week_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+};
+
+pub const QuickTeamItemSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "QuickTeamItemSave";
+    name: []const u8 = "",
+    avatar_ids: std.ArrayList(u32) = .empty,
+    buddy_id: u32 = 0,
+    pub const name_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
+    pub const avatar_ids_field_desc: FieldDesc = .{ .number = 2, .xor = 0 };
+    pub const buddy_id_field_desc: FieldDesc = .{ .number = 3, .xor = 0 };
+};
+
+pub const QuickTeamSave = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "QuickTeamSave";
+    teams: std.ArrayList(QuickTeamItemSave) = .empty,
+    pub const teams_field_desc: FieldDesc = .{ .number = 1, .xor = 0 };
 };

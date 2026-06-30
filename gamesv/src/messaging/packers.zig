@@ -208,10 +208,53 @@ pub fn packDungeonPackageInfo(
     };
 }
 
+pub fn packQuickTeamData(arena: Allocator, quick_teams: []const QuickTeam.Meta) !pb.QuickTeamData {
+    var quick_team_list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, QuickTeam.slots);
+
+    for (quick_teams, 1..) |*quick_team, slot| {
+        var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
+        for (quick_team.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(avatar_id) });
+
+        var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
+        if (quick_team.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
+
+        quick_team_list.appendAssumeCapacity(.{
+            .slot = @truncate(slot),
+            .name = quick_team.name.view(),
+            .avatar_list = avatar_list,
+            .buddy_list = buddy_list,
+        });
+    }
+
+    return .{ .quick_team_list = quick_team_list };
+}
+
+pub fn packQuickTeamSync(arena: Allocator, quick_teams: []const logic.Changes.QuickTeam) !pb.QuickTeamSync {
+    var quick_team_list: std.ArrayList(pb.QuickTeam) = try .initCapacity(arena, quick_teams.len);
+
+    for (quick_teams) |quick_team| {
+        var avatar_list: std.ArrayList(pb.QuickTeamAvatar) = try .initCapacity(arena, QuickTeam.avatar_slots);
+        for (quick_team.meta.avatar_ids) |avatar_id| avatar_list.appendAssumeCapacity(.{ .avatar_id = @intFromEnum(avatar_id) });
+
+        var buddy_list: std.ArrayList(pb.QuickTeamBuddy) = .empty;
+        if (quick_team.meta.buddy_id.unwrap()) |id| try buddy_list.append(arena, .{ .buddy_id = id });
+
+        quick_team_list.appendAssumeCapacity(.{
+            .slot = @intFromEnum(quick_team.slot),
+            .name = quick_team.meta.name.view(),
+            .avatar_list = avatar_list,
+            .buddy_list = buddy_list,
+        });
+    }
+
+    return .{ .quick_team_list = quick_team_list };
+}
+
 const ArrayList = std.ArrayList;
 const GameMode = logic.Changes.GameMode;
 const Avatar = Properties.Avatar;
 const Equipment = Properties.Equipment;
+const QuickTeam = Properties.QuickTeam;
 const Properties = logic.Properties;
 const Allocator = std.mem.Allocator;
 
