@@ -306,6 +306,7 @@ const vtable: Io.VTable = vtable: {
     v.futexWait = futexWait;
     v.futexWaitUncancelable = futexWaitUncancelable;
     v.futexWake = futexWake;
+    v.batchAwaitAsync = batchAwaitAsync;
     v.batchAwaitConcurrent = batchAwaitConcurrent;
     v.batchCancel = batchCancel;
     v.netBindIp = netBindIp;
@@ -558,6 +559,33 @@ const BatchUserdata = extern struct {
         }
     };
 };
+
+fn batchAwaitAsync(userdata: ?*anyopaque, batch: *Io.Batch) Io.Cancelable!void {
+    batchAwaitConcurrent(userdata, batch, .none) catch |err| switch (err) {
+        error.Canceled => |e| return e,
+        error.Timeout => unreachable,
+        error.ConcurrencyUnavailable => {
+            // If concurrency is not available, perform one operation and return.
+
+            const submitted_index = switch (batch.submitted.head) {
+                .none => return,
+                _ => |index| index.toIndex(),
+            };
+
+            const submission = &batch.storage[submitted_index].submission;
+            const result = try operate(userdata, submission.operation);
+
+            batch.submitted.head = batch.storage[submitted_index].submission.node.next;
+
+            batch.storage[submitted_index] = .{ .completion = .{
+                .node = .{ .next = batch.completed.head },
+                .result = result,
+            } };
+
+            batch.completed.head = @enumFromInt(submitted_index);
+        },
+    };
+}
 
 fn batchAwaitConcurrent(
     userdata: ?*anyopaque,
