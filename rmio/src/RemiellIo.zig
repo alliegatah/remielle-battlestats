@@ -737,10 +737,10 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
         }
 
         // All cancelation requests are acknowledged. Remaining operations may be still in progress.
-        while (batch_userdata.pending_count != 0) {
+        if (batch_userdata.pending_count != 0) {
             wait_point.awaitee = .{ .operation = .{
                 .outstanding = batch_userdata.pending_count,
-                .status = .waiting_for_one_or_more,
+                .status = .waiting_for_all,
                 .completed_list = .{},
             } };
 
@@ -760,6 +760,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
         }
     }
 
+    debug.assert(batch_userdata.pending_count == 0);
     batch_userdata.destroy(rio.gpa, batch.storage.len);
     batch.userdata = null;
 }
