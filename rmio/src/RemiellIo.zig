@@ -197,15 +197,12 @@ const Coroutine = struct {
         }
 
         fn acknowledge(cancelation: *Cancelation) Io.Cancelable!void {
-            switch (cancelation.status) {
-                .none, .acknowledged => {},
-                .requested => switch (cancelation.protection) {
-                    .unblocked => {
-                        cancelation.status = .acknowledged;
-                        return error.Canceled;
-                    },
-                    .blocked => {},
+            switch (cancelation.*) {
+                .{ .status = .requested, .protection = .unblocked } => {
+                    cancelation.status = .acknowledged;
+                    return error.Canceled;
                 },
+                else => {},
             }
         }
     };
