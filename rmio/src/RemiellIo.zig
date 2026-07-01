@@ -534,28 +534,23 @@ const BatchUserdata = extern struct {
         ));
     }
 
-    const NetReceive = struct {
-        operation_userdata: *[7]usize,
+    const NetReceive = extern struct {
+        message_buffer: [*]Io.net.IncomingMessage,
+        data_buffer: [*]u8,
 
-        pub inline fn set(nr: NetReceive, submission: Io.Operation.NetReceive) void {
-            nr.operation_userdata[0] = @intFromPtr(submission.message_buffer.ptr);
-            nr.operation_userdata[1] = submission.message_buffer.len;
-            nr.operation_userdata[2] = @intFromPtr(submission.data_buffer.ptr);
-            nr.operation_userdata[3] = submission.data_buffer.len;
+        const TypeErased = Io.Operation.Storage.Pending.Userdata;
+
+        comptime {
+            debug.assert(@sizeOf(NetReceive) <= @sizeOf(TypeErased));
         }
 
-        pub inline fn messageBuffer(nr: NetReceive) []Io.net.IncomingMessage {
-            return @as(
-                [*]Io.net.IncomingMessage,
-                @ptrFromInt(nr.operation_userdata[0]),
-            )[0..nr.operation_userdata[1]];
+        inline fn fromErased(type_erased: *TypeErased) *NetReceive {
+            return @ptrCast(type_erased);
         }
 
-        pub inline fn dataBuffer(nr: NetReceive) []u8 {
-            return @as(
-                [*]u8,
-                @ptrFromInt(nr.operation_userdata[2]),
-            )[0..nr.operation_userdata[3]];
+        fn init(userdata: *NetReceive, operation: *const Io.Operation.NetReceive) void {
+            userdata.message_buffer = operation.message_buffer.ptr;
+            userdata.data_buffer = operation.data_buffer.ptr;
         }
     };
 };
@@ -652,11 +647,8 @@ fn batchAwaitConcurrent(
                     },
                 };
 
-                const operation_userdata: BatchUserdata.NetReceive = .{
-                    .operation_userdata = &storage.pending.userdata,
-                };
-
-                operation_userdata.set(net_receive);
+                const operation_userdata: *BatchUserdata.NetReceive = .fromErased(&storage.pending.userdata);
+                operation_userdata.init(&net_receive);
             },
         }
 
@@ -817,18 +809,13 @@ fn batchPutCompletion(
     switch (completion.result) {
         .cancel => unreachable,
         .net_receive => |result| {
-            const operation_userdata: BatchUserdata.NetReceive = .{
-                .operation_userdata = &pending.userdata,
-            };
-
-            const message_buffer = operation_userdata.messageBuffer();
-            const data_buffer = operation_userdata.dataBuffer();
+            const operation_userdata: *BatchUserdata.NetReceive = .fromErased(&pending.userdata);
 
             batch.storage[index] = .{ .completion = .{
                 .node = .{ .next = batch.completed.head },
                 .result = .{ .net_receive = if (result) |n_received| result: {
-                    const message = &message_buffer[0];
-                    message.data = data_buffer[0..n_received];
+                    const message = &operation_userdata.message_buffer[0];
+                    message.data = operation_userdata.data_buffer[0..n_received];
 
                     break :result .{ null, 1 };
                 } else |err| switch (err) {
