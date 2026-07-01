@@ -1,4 +1,5 @@
 impl: Impl,
+gpa: Allocator,
 arena: std.heap.ArenaAllocator,
 coro_storage: Coroutine.Storage,
 current_coro: ?*Coroutine,
@@ -66,6 +67,7 @@ const WaitPoint = struct {
         operation: struct {
             /// How many operations are in-flight for this coroutine.
             outstanding: u32,
+            completed_list: DoublyLinkedList,
             status: enum {
                 waiting_for_one_or_more,
                 waiting_for_all,
@@ -86,6 +88,7 @@ pub const InitError = error{
 pub fn init(gpa: Allocator, options: InitOptions) InitError!RemiellIo {
     return .{
         .impl = try .init(),
+        .gpa = gpa,
         .arena = .init(gpa),
         .coro_storage = .init(options.coroutine_limit, options.stack_size),
         .current_coro = null,
@@ -303,6 +306,8 @@ const vtable: Io.VTable = vtable: {
     v.futexWait = futexWait;
     v.futexWaitUncancelable = futexWaitUncancelable;
     v.futexWake = futexWake;
+    v.batchAwaitConcurrent = batchAwaitConcurrent;
+    v.batchCancel = batchCancel;
     v.netBindIp = netBindIp;
     v.netSend = netSend;
     v.netListenIp = netListenIp;
@@ -470,6 +475,342 @@ fn operate(userdata: ?*anyopaque, operation: Io.Operation) Io.Cancelable!Io.Oper
         },
 
         .device_io_control => unreachable, // Not implemented
+    }
+}
+
+// Trailing:
+// * [batch.storage.len]Operation.Storage.WithAwaiter
+const BatchUserdata = extern struct {
+    pending_count: u32,
+
+    inline fn operations(userdata: *BatchUserdata) [*]Operation.Storage.WithAwaiter {
+        return @ptrFromInt(std.mem.alignForward(
+            usize,
+            @intFromPtr(userdata) + @sizeOf(@FieldType(BatchUserdata, "pending_count")),
+            @alignOf(Operation.Storage.WithAwaiter),
+        ));
+    }
+
+    fn allocationSize(operations_count: usize) usize {
+        const operations_base = std.mem.alignForward(
+            usize,
+            @sizeOf(@FieldType(BatchUserdata, "pending_count")),
+            @alignOf(Operation.Storage.WithAwaiter),
+        );
+
+        const operations_size = std.mem.alignForward(
+            usize,
+            @sizeOf(Operation.Storage.WithAwaiter),
+            @alignOf(Operation.Storage.WithAwaiter),
+        ) * operations_count;
+
+        return operations_base + operations_size;
+    }
+
+    fn alloc(gpa: Allocator, operations_count: usize) Allocator.Error!*BatchUserdata {
+        return @ptrCast(try gpa.alignedAlloc(
+            u8,
+            .of(BatchUserdata),
+            allocationSize(operations_count),
+        ));
+    }
+
+    fn destroy(userdata: *BatchUserdata, gpa: Allocator, operations_count: usize) void {
+        const bytes = @as(
+            [*]align(@alignOf(BatchUserdata)) u8,
+            @ptrCast(@alignCast(userdata)),
+        )[0..allocationSize(operations_count)];
+
+        gpa.free(bytes);
+    }
+
+    fn indexOf(userdata: *BatchUserdata, item: *Operation.Storage.WithAwaiter) usize {
+        const list = userdata.operations();
+        return @divExact(@intFromPtr(item) - @intFromPtr(list), std.mem.alignForward(
+            usize,
+            @sizeOf(Operation.Storage.WithAwaiter),
+            @alignOf(Operation.Storage.WithAwaiter),
+        ));
+    }
+
+    const NetReceive = struct {
+        operation_userdata: *[7]usize,
+
+        pub inline fn set(nr: NetReceive, submission: Io.Operation.NetReceive) void {
+            nr.operation_userdata[0] = @intFromPtr(submission.message_buffer.ptr);
+            nr.operation_userdata[1] = submission.message_buffer.len;
+            nr.operation_userdata[2] = @intFromPtr(submission.data_buffer.ptr);
+            nr.operation_userdata[3] = submission.data_buffer.len;
+        }
+
+        pub inline fn messageBuffer(nr: NetReceive) []Io.net.IncomingMessage {
+            return @as(
+                [*]Io.net.IncomingMessage,
+                @ptrFromInt(nr.operation_userdata[0]),
+            )[0..nr.operation_userdata[1]];
+        }
+
+        pub inline fn dataBuffer(nr: NetReceive) []u8 {
+            return @as(
+                [*]u8,
+                @ptrFromInt(nr.operation_userdata[2]),
+            )[0..nr.operation_userdata[3]];
+        }
+    };
+};
+
+fn batchAwaitConcurrent(
+    userdata: ?*anyopaque,
+    batch: *Io.Batch,
+    timeout: Io.Timeout,
+) Io.Batch.AwaitConcurrentError!void {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const wait_point = rio.waitPoint();
+
+    switch (timeout) {
+        .none => {},
+        .deadline, .duration => return error.ConcurrencyUnavailable, // Not implemented
+    }
+
+    if (rio.current_coro) |coro|
+        try coro.cancelation.acknowledge();
+
+    const batch_userdata: *BatchUserdata = if (batch.userdata) |type_erased|
+        @ptrCast(@alignCast(type_erased))
+    else create: {
+        const batch_userdata = BatchUserdata.alloc(rio.gpa, batch.storage.len) catch
+            return error.ConcurrencyUnavailable;
+
+        batch_userdata.pending_count = 0;
+
+        batch.userdata = batch_userdata;
+        break :create batch_userdata;
+    };
+
+    const batched_list = batch_userdata.operations()[0..batch.storage.len];
+
+    var next = batch.submitted.head;
+    while (next != .none) {
+        const index = next.toIndex();
+        const storage = &batch.storage[index];
+
+        next = storage.submission.node.next;
+
+        switch (storage.submission.operation) {
+            .file_read_streaming,
+            .file_write_streaming,
+            .device_io_control,
+            => return error.ConcurrencyUnavailable, // TODO
+
+            .net_receive => |net_receive| {
+                const message = &net_receive.message_buffer[0];
+
+                batched_list[index] = .{
+                    .wait_point = wait_point,
+                    .storage = .init(.{ .net_receive = .{
+                        .socket_handle = net_receive.socket_handle,
+                        .from = &message.from,
+                        .buffer = net_receive.data_buffer,
+                    } }),
+                };
+
+                rio.impl.submissions.append(&batched_list[index].storage.submission.node);
+
+                storage.* = .{
+                    .pending = .{
+                        .node = .{ .prev = batch.pending.tail, .next = .none },
+                        .tag = .net_receive,
+                        .userdata = undefined,
+                    },
+                };
+
+                const operation_userdata: BatchUserdata.NetReceive = .{
+                    .operation_userdata = &storage.pending.userdata,
+                };
+
+                operation_userdata.set(net_receive);
+            },
+        }
+
+        switch (batch.pending.tail) {
+            .none => batch.pending.head = @enumFromInt(index),
+            _ => |tail| batch.storage[tail.toIndex()].pending.node.next = @enumFromInt(index),
+        }
+
+        batch.storage[index].pending.node.prev = batch.pending.tail;
+
+        batch.submitted.head = next;
+        batch.pending.tail = @enumFromInt(index);
+        batch_userdata.pending_count += 1;
+    }
+
+    if (batch_userdata.pending_count == 0)
+        return;
+
+    wait_point.awaitee = .{
+        .operation = .{
+            .outstanding = batch_userdata.pending_count,
+            .completed_list = .{},
+            .status = .waiting_for_one_or_more,
+        },
+    };
+
+    rio.yield(.wait_for_io);
+
+    if (wait_point.awaitee.operation.completed_list.first == null) {
+        // Must be due to cancelation.
+        try rio.current_coro.?.cancelation.acknowledge();
+        unreachable; // `acknowledge` must return `error.Canceled`
+    }
+
+    while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
+        batch_userdata.pending_count -= 1;
+
+        const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
+        batchPutCompletion(batch, batch_userdata, completion);
+    }
+}
+
+fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
+    const rio: *RemiellIo = @ptrCast(@alignCast(userdata));
+    const batch_userdata: *BatchUserdata = @ptrCast(@alignCast(batch.userdata orelse return));
+
+    if (batch_userdata.pending_count != 0) {
+        const maybe_coro = rio.current_coro;
+        const wait_point = rio.waitPoint();
+
+        const batched_list = batch_userdata.operations()[0..batch.storage.len];
+
+        const old_cancelation_protection: Io.CancelProtection = if (maybe_coro) |coro|
+            coro.cancelation.swapProtection(.blocked)
+        else
+            undefined;
+
+        defer if (maybe_coro) |coro| {
+            _ = coro.cancelation.swapProtection(old_cancelation_protection);
+        };
+
+        var next = batch.pending.head;
+        var remaining = batch_userdata.pending_count;
+
+        while (remaining != 0) {
+            var cancelations: [16]Operation.Storage.WithAwaiter = undefined;
+            const oneshot_size = @min(cancelations.len, batch_userdata.pending_count);
+            remaining -= oneshot_size;
+
+            for (cancelations[0..oneshot_size]) |*cancelation| {
+                const index = next.toIndex();
+
+                cancelation.* = .{
+                    .wait_point = wait_point,
+                    .storage = .init(.{ .cancel = .{ .operation = &batched_list[index].storage } }),
+                };
+
+                rio.impl.submissions.append(&cancelation.storage.submission.node);
+            }
+
+            var unacknowledged = oneshot_size;
+
+            // Wait for cancelation acknowledgements.
+            // During this time, regular operation completions may arrive as well.
+            while (unacknowledged != 0) {
+                wait_point.awaitee = .{ .operation = .{
+                    .outstanding = batch_userdata.pending_count + oneshot_size,
+                    .status = .waiting_for_one_or_more,
+                    .completed_list = .{},
+                } };
+
+                rio.yield(.wait_for_io);
+
+                while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
+                    const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
+
+                    switch (completion.result) {
+                        .cancel => unacknowledged -= 1,
+                        else => {
+                            batch_userdata.pending_count -= 1;
+                            batchPutCompletion(batch, batch_userdata, completion);
+                        },
+                    }
+                }
+            }
+        }
+
+        // All cancelation requests are acknowledged. Remaining operations may be still in progress.
+        while (batch_userdata.pending_count != 0) {
+            wait_point.awaitee = .{ .operation = .{
+                .outstanding = batch_userdata.pending_count,
+                .status = .waiting_for_one_or_more,
+                .completed_list = .{},
+            } };
+
+            rio.yield(.wait_for_io);
+
+            while (wait_point.awaitee.operation.completed_list.popFirst()) |node| {
+                const completion: *Operation.Storage.Completion = @alignCast(@fieldParentPtr("node", node));
+
+                switch (completion.result) {
+                    .cancel => unreachable, // cancel requests are already acknowledged.
+                    else => {
+                        batch_userdata.pending_count -= 1;
+                        batchPutCompletion(batch, batch_userdata, completion);
+                    },
+                }
+            }
+        }
+    }
+
+    batch_userdata.destroy(rio.gpa, batch.storage.len);
+    batch.userdata = null;
+}
+
+/// Removes from `batch.pending` and puts into `batch.completed`.
+fn batchPutCompletion(
+    batch: *Io.Batch,
+    batch_userdata: *BatchUserdata,
+    completion: *Operation.Storage.Completion,
+) void {
+    const operation = completion.parentPtr(Operation.Storage.WithAwaiter, "storage");
+    const index = batch_userdata.indexOf(operation);
+
+    const pending = &batch.storage[index].pending;
+
+    switch (pending.node.prev) {
+        .none => batch.pending.head = pending.node.next,
+        else => |prev| batch.storage[prev.toIndex()].pending.node.next = pending.node.next,
+    }
+
+    switch (pending.node.next) {
+        .none => batch.pending.tail = pending.node.prev,
+        else => |next| batch.storage[next.toIndex()].pending.node.prev = pending.node.prev,
+    }
+
+    switch (completion.result) {
+        .cancel => unreachable,
+        .net_receive => |result| {
+            const operation_userdata: BatchUserdata.NetReceive = .{
+                .operation_userdata = &pending.userdata,
+            };
+
+            const message_buffer = operation_userdata.messageBuffer();
+            const data_buffer = operation_userdata.dataBuffer();
+
+            batch.storage[index] = .{ .completion = .{
+                .node = .{ .next = batch.completed.head },
+                .result = .{ .net_receive = if (result) |n_received| result: {
+                    const message = &message_buffer[0];
+                    message.data = data_buffer[0..n_received];
+
+                    break :result .{ null, 1 };
+                } else |err| switch (err) {
+                    error.Canceled => return,
+                    else => |e| .{ e, 0 },
+                } },
+            } };
+
+            batch.completed.head = @enumFromInt(index);
+        },
+        else => unreachable,
     }
 }
 
@@ -742,6 +1083,7 @@ fn closeMany(rio: *RemiellIo, comptime T: type, list: []const T) void {
 
         wp.awaitee = .{ .operation = .{
             .outstanding = @intCast(oneshot_size),
+            .completed_list = .{},
             .status = .waiting_for_all,
         } };
 
@@ -1250,6 +1592,7 @@ fn syscall(
 
     wp.awaitee = .{ .operation = .{
         .outstanding = 1,
+        .completed_list = .{},
         .status = .waiting_for_all,
     } };
 
@@ -1275,6 +1618,7 @@ fn syscall(
 
     wait.* = .{
         .outstanding = 2,
+        .completed_list = .{},
         .status = .waiting_for_all,
     };
 
@@ -1342,6 +1686,7 @@ fn yield(rio: *RemiellIo, reason: YieldReason) void {
 
             const wait = &storage.wait_point.awaitee.operation;
             wait.outstanding -= 1;
+            wait.completed_list.append(&completion.node);
 
             switch (wait.status) {
                 .scheduled => {}, // already
