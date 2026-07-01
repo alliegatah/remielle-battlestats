@@ -1,3 +1,22 @@
+const loopback = Io.net.IpAddress.parseIp4("127.0.0.1", 0) catch unreachable;
+
+test "netBind with unspecified port" {
+    if (!RemiellIo.supported) return error.SkipZigTest;
+
+    var rmio: RemiellIo = try .init(testing.allocator, .{
+        .coroutine_limit = .limited(1),
+        .stack_size = 1024 * 1024,
+    });
+
+    defer rmio.deinit();
+    const io = rmio.io();
+
+    const socket = try loopback.bind(io, .{ .mode = .dgram, .protocol = .udp });
+    defer socket.close(io);
+
+    try testing.expect(socket.address.ip4.port != 0);
+}
+
 test "futex operations: Io.Queue with an empty buffer" {
     if (!RemiellIo.supported) return error.SkipZigTest;
 

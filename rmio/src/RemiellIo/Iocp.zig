@@ -753,7 +753,7 @@ pub fn netBind(
         if (rc == ws2_32.SOCKET_ERROR) return unexpectedWsa(ws2_32.WSAGetLastError());
     }
 
-    const sockaddr: ws2_32.sockaddr.in = .{
+    var sockaddr: ws2_32.sockaddr.in = .{
         .addr = @bitCast(address.ip4.bytes),
         .port = std.mem.nativeToBig(u16, address.ip4.port),
     };
@@ -771,7 +771,25 @@ pub fn netBind(
     _ = kernel32.CreateIoCompletionPort(@ptrCast(socket), iocp.port, 0, 0) orelse
         return unexpectedWin32(windows.GetLastError());
 
-    return .{ .handle = socket, .address = address.* };
+    return .{
+        .handle = socket,
+        .address = switch (address.ip4.port) {
+            0 => getsockname: {
+                var addrlen: i32 = @sizeOf(ws2_32.sockaddr.in);
+                break :getsockname if (ws2_32.getsockname(
+                    socket,
+                    @ptrCast(&sockaddr),
+                    &addrlen,
+                ) == ws2_32.SOCKET_ERROR) {
+                    return unexpectedWsa(ws2_32.WSAGetLastError());
+                } else .{ .ip4 = .{
+                    .bytes = @bitCast(sockaddr.addr),
+                    .port = std.mem.bigToNative(u16, sockaddr.port),
+                } };
+            },
+            else => address.*,
+        },
+    };
 }
 
 pub fn netListen(
