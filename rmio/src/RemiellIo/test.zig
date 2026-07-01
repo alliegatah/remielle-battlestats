@@ -67,6 +67,48 @@ test "Batch netReceive" {
     try testing.expect(batch.next() == null);
 }
 
+test "Batch.awaitConcurrent fails without memory allocations but Batch.awaitAsync succeeds" {
+    if (!RemiellIo.supported) return error.SkipZigTest;
+
+    var rmio: RemiellIo = try .init(.failing, .{
+        .coroutine_limit = .nothing,
+        .stack_size = 0,
+    });
+
+    defer rmio.deinit();
+    const io = rmio.io();
+
+    const receiver = try loopback.bind(io, .{ .mode = .dgram, .protocol = .udp });
+    defer receiver.close(io);
+
+    const sender = try loopback.bind(io, .{ .mode = .dgram, .protocol = .udp });
+    defer sender.close(io);
+
+    var message: Io.net.IncomingMessage = undefined;
+    var buffer: [1400]u8 = undefined;
+
+    var batch_storage: [1]Io.Operation.Storage = undefined;
+    var batch: Io.Batch = .init(&batch_storage);
+    defer batch.cancel(io);
+
+    batch.addAt(0, .{ .net_receive = .{
+        .socket_handle = receiver.handle,
+        .message_buffer = (&message)[0..1],
+        .data_buffer = &buffer,
+        .flags = .{},
+    } });
+
+    try sender.send(io, &receiver.address, "heapless");
+
+    try testing.expectError(error.ConcurrencyUnavailable, batch.awaitConcurrent(io, .none));
+
+    try batch.awaitAsync(io);
+
+    const completion = batch.next().?;
+    try testing.expectEqual(completion.result.net_receive, .{ null, 1 });
+    try testing.expectEqualSlices(u8, message.data, "heapless");
+}
+
 test "futex operations: Io.Queue with an empty buffer" {
     if (!RemiellIo.supported) return error.SkipZigTest;
 
