@@ -570,7 +570,7 @@ fn batchAwaitAsync(userdata: ?*anyopaque, batch: *Io.Batch) Io.Cancelable!void {
             const submission = &batch.storage[submitted_index].submission;
             const result = try operate(userdata, submission.operation);
 
-            batch.submitted.head = batch.storage[submitted_index].submission.node.next;
+            batch.submitted = .{ .head = submission.node.next, .tail = submission.node.next };
 
             batch.storage[submitted_index] = .{ .completion = .{
                 .node = .{ .next = batch.completed.head },
@@ -659,7 +659,10 @@ fn batchAwaitConcurrent(
 
         batch.storage[index].pending.node.prev = batch.pending.tail;
 
-        batch.submitted.head = next;
+        // `submitted.tail` is used only for `Batch.addAt` to be in-order.
+        // In case of a partial submission here, it'll become unordered.
+        batch.submitted = .{ .head = next, .tail = next };
+
         batch.pending.tail = @enumFromInt(index);
         batch_userdata.pending_count += 1;
     }
