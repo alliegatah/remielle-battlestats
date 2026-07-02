@@ -720,6 +720,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
 
             for (cancelations[0..oneshot_size]) |*cancelation| {
                 const index = next.toIndex();
+                next = batch.storage[index].pending.node.next;
 
                 cancelation.* = .{
                     .wait_point = wait_point,
@@ -735,7 +736,7 @@ fn batchCancel(userdata: ?*anyopaque, batch: *Io.Batch) void {
             // During this time, regular operation completions may arrive as well.
             while (unacknowledged != 0) {
                 wait_point.awaitee = .{ .operation = .{
-                    .outstanding = batch_userdata.pending_count + oneshot_size,
+                    .outstanding = batch_userdata.pending_count + unacknowledged,
                     .status = .waiting_for_one_or_more,
                     .completed_list = .{},
                 } };
@@ -919,10 +920,7 @@ fn cancelAndWait(rio: *RemiellIo, coro: *Coroutine) void {
         .operation => |o| switch (o.outstanding) {
             // Nothing to do. The task is already scheduled since its operation is complete.
             0 => {},
-            // Cause a "spurious" wakeup, letting it handle the cancelation request.
-            // This mechanism is similar to EINTR.
-            1 => rio.schedule(&coro.wait_point),
-            else => unreachable,
+            else => rio.schedule(&coro.wait_point),
         },
 
         // TODO: should it propagate cancelation request?
