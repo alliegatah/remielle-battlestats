@@ -2,7 +2,7 @@
 ![segs](assets/segs.png)
 
 > ⚡ **Combat Analytics Auto-Logger Included**  
-> This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_2.pb`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://combatstats-omega.vercel.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
+> This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_2.pb`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
 
 **Remielle** is a Zenless Zone Zero server emulator that prioritizes **efficiency**, **stability** and **correctness**.
 
