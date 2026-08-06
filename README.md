@@ -1,5 +1,8 @@
-# Remielle
+# Remielle (Combat Analytics & Battle Stats Build)
 ![segs](assets/segs.png)
+
+> ⚡ **Combat Analytics Auto-Logger Included**  
+> This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_2.pb`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://combatstats-omega.vercel.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
 
 **Remielle** is a Zenless Zone Zero server emulator that prioritizes **efficiency**, **stability** and **correctness**.
 
@@ -18,19 +21,20 @@ For use with the game client, the client patch is required: [thaumiel](https://g
 #### Currently supported client version: `CNBetaWin3.2.1`, it can be found in our [discord server](https://discord.xeondev.com/)
 
 ## Steps to compile and run
+
 Linux:
 ```sh
-# git(1) must be available in the $PATH
-git clone https://git.xeondev.com/remielle/remielle.git
-cd remielle
+# Clone this Battle Stats repository (0.1.x branch)
+git clone -b 0.1.x https://github.com/alliegatah/remielle-battlestats.git
+cd remielle-battlestats
 . ./envrc # The `envrc` script will setup the zig compiler for you.
 zig build serve-all
 ```
 Windows (powershell):
 ```ps1
-# git(1) must be available in the $PATH
-git clone https://git.xeondev.com/remielle/remielle.git
-cd remielle
+# Clone this Battle Stats repository (0.1.x branch)
+git clone -b 0.1.x https://github.com/alliegatah/remielle-battlestats.git
+cd remielle-battlestats
 ./envrc.ps1 # The `envrc.ps1` script will setup the zig compiler for you.
 zig build serve-all
 ```
