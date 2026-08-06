@@ -151,6 +151,7 @@ fn onGameMessageReceived(
     } else if (message.data.len < kcp.Header.size) return;
 
     const status = server.receiveKcpPacket(
+        io,
         current_time,
         &message.from,
         message.data,

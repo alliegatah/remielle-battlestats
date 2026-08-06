@@ -1,5 +1,7 @@
 const log = std.log.scoped(.@"remielle-gamesv::messaging");
 
+var endbattle_dump_seq: u64 = 0;
+
 const namespaces: []const type = &.{
     @import("handlers/player.zig"),
     @import("handlers/avatar.zig"),
@@ -82,11 +84,29 @@ pub fn process(
                 const InMessage = MessageOf(Fn);
                 if (@intFromEnum(id) != rmpb.cmdId(InMessage.Data)) continue;
 
+                const decrypted_body = try arena.alloc(u8, msg_header.body_len);
+                xored_reader.interface.readSliceAll(decrypted_body) catch return error.DecodeFail;
+
+                if (InMessage.Data == rmpb.main.EndBattleCsReq) {
+                    const cwd = Io.Dir.cwd();
+                    cwd.createDirPath(frame.io, "logs/") catch {};
+                    endbattle_dump_seq += 1;
+
+                    var path_buf: [64]u8 = undefined;
+                    const path = std.fmt.bufPrint(&path_buf, "logs/endbattle_{d}.pb", .{endbattle_dump_seq}) catch "logs/endbattle.pb";
+
+                    if (cwd.createFile(frame.io, path, .{})) |file| {
+                        defer file.close(frame.io);
+                        file.writeStreamingAll(frame.io, decrypted_body) catch {};
+                    } else |_| {}
+                }
+
+                var body_reader = Io.Reader.fixed(decrypted_body);
                 const data = rmpb.decode(
                     .main,
                     InMessage.Data,
                     arena,
-                    &xored_reader.interface,
+                    &body_reader,
                 ) catch |err| switch (err) {
                     error.OutOfMemory => |e| return e,
                     else => return error.DecodeFail,

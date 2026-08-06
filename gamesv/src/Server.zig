@@ -93,6 +93,7 @@ pub const Frame = struct {
     properties: *logic.Properties.List,
     /// Same as `Server.multi_conversation`
     multi_conversation: *kcp.MultiConversation,
+    io: Io,
 
     pub inline fn player(frame: *const Frame) logic.Properties.Player {
         return @enumFromInt(frame.target_index);
@@ -233,6 +234,7 @@ pub const ReceiveStatus = union(enum) {
 
 pub fn receiveKcpPacket(
     server: *Server,
+    io: Io,
     time: Timestamp,
     from: *const net.IpAddress,
     buffer: []u8,
@@ -266,6 +268,7 @@ pub fn receiveKcpPacket(
         .properties = &server.properties,
         .calendar = &server.persistent.calendar,
         .multi_conversation = &server.multi_conversation,
+        .io = io,
     };
 
     while (true) {

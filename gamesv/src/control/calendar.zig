@@ -36,6 +36,7 @@ pub fn modHadalZoneSchedule(
             .properties = &server.properties,
             .calendar = &server.persistent.calendar,
             .multi_conversation = &server.multi_conversation,
+            .io = context.io,
         };
 
         try logic.mutators.dispatchLogicChanges(&frame, &changes);
