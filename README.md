@@ -2,7 +2,7 @@
 ![segs](assets/segs.png)
 
 > ⚡ **Combat Analytics Auto-Logger Included**  
-> This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_2.pb`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
+> This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_2.pb`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://combatstats.vercel.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
 
 **Remielle** is a Zenless Zone Zero server emulator that prioritizes **efficiency**, **stability** and **correctness**.
 
@@ -18,10 +18,9 @@ To build **Remielle** from sources you need:
 
 For use with the game client, the client patch is required: [thaumiel](https://git.xeondev.com/remielle/thaumiel)
 
-#### Currently supported client version: `CNBetaWin3.2.2`, it can be found in our [discord server](https://discord.xeondev.com/)
+#### Currently supported client version: `CNBetaWin3.2.3`, it can be found in our [discord server](https://discord.xeondev.com/)
 
 ## Steps to compile and run
-
 Linux:
 ```sh
 # Clone this Battle Stats repository (0.1.x branch)
