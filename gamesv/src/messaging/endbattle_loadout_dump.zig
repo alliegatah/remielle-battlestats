@@ -62,14 +62,17 @@ fn formatSidecar(
         try appendFmt(&buf, arena, "\n    {{\n      \"avatar_id\": {d}", .{avatar_id});
 
         const avatar_id_enum = std.enums.fromInt(Properties.Avatar.Id, avatar_id) orelse {
-            try buf.appendSlice(arena, ",\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
+            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
             continue;
         };
 
         const avatar_index = avatar_prop.indexes.get(avatar_id_enum) orelse {
-            try buf.appendSlice(arena, ",\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
+            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
             continue;
         };
+
+        try buf.appendSlice(arena, ",\n      ");
+        try appendMindscapeJson(&buf, arena, &avatar_prop.meta[avatar_index]);
 
         try buf.appendSlice(arena, ",\n      ");
         try appendWeaponJson(&buf, arena, avatar_prop, weapon_prop, avatar_index);
@@ -201,6 +204,25 @@ fn collectAvatarIdsFromEquippedRoster(
         if (has_weapon or has_equipment)
             try appendUnique(list, arena, @intFromEnum(id));
     }
+}
+
+fn appendMindscapeJson(
+    buf: *std.ArrayList(u8),
+    arena: Allocator,
+    meta: *const Properties.Avatar.Meta,
+) !void {
+    const tabs = meta.mindscape_tab_state.toBools();
+
+    try appendFmt(buf, arena, "\"mindscape\": {{ \"level\": {d}, \"tab_state\": [", .{
+        meta.talents.toInt(),
+    });
+
+    for (tabs, 0..) |active, index| {
+        if (index != 0) try buf.appendSlice(arena, ", ");
+        try buf.appendSlice(arena, if (active) "true" else "false");
+    }
+
+    try buf.appendSlice(arena, "] }");
 }
 
 fn appendWeaponJson(
