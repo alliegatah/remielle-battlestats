@@ -112,6 +112,16 @@ pub fn process(
                     else => return error.DecodeFail,
                 };
 
+                if (InMessage.Data == rmpb.main.EndBattleCsReq)
+                    endbattle_loadout_dump.writeSidecar(
+                        frame.io,
+                        arena,
+                        endbattle_dump_seq,
+                        frame.properties,
+                        frame.target_index,
+                        &data,
+                    );
+
                 const message: InMessage = .{ .data = &data };
 
                 var changes: logic.Changes = .init;
@@ -306,6 +316,7 @@ const kcp = @import("../kcp.zig");
 const logic = @import("../logic.zig");
 const Assets = @import("../Assets.zig");
 const messaging = @import("../messaging.zig");
+const endbattle_loadout_dump = @import("endbattle_loadout_dump.zig");
 
 const rmio = @import("rmio");
 const rmpb = @import("rmpb");
