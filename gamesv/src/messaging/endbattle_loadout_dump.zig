@@ -44,18 +44,19 @@ fn formatSidecar(
     var buf: std.ArrayList(u8) = .empty;
     errdefer buf.deinit(arena);
 
-    try appendFmt(&buf, arena, "{{\n  \"seq\": {d},\n  \"avatars\": [", .{seq});
-
-    const avatar_ids = if (message.fight_result) |*fight_result|
-        try collectAvatarIds(arena, fight_result)
-    else
-        &[_]u32{};
-
     const avatar_prop = properties.getPtr(.avatar, player_index);
     const weapon_prop = properties.getPtr(.weapon, player_index);
     const equip_prop = properties.getPtr(.equip, player_index);
+    const quick_team = properties.getPtr(.quick_team, player_index);
 
-    for (avatar_ids, 0..) |avatar_id, index| {
+    const resolved = try resolveAvatarIds(arena, message.fight_result, avatar_prop, quick_team);
+
+    try appendFmt(&buf, arena, "{{\n  \"seq\": {d},\n  \"avatar_id_source\": \"{s}\",\n  \"avatars\": [", .{
+        seq,
+        resolved.source,
+    });
+
+    for (resolved.ids, 0..) |avatar_id, index| {
         if (index != 0) try buf.appendSlice(arena, ",");
 
         try appendFmt(&buf, arena, "\n    {{\n      \"avatar_id\": {d}", .{avatar_id});
@@ -83,6 +84,36 @@ fn formatSidecar(
     return buf.toOwnedSlice(arena);
 }
 
+const ResolvedAvatarIds = struct {
+    ids: []const u32,
+    source: []const u8,
+};
+
+fn resolveAvatarIds(
+    arena: Allocator,
+    fight_result: ?pb.FightResult,
+    avatar_prop: *const Properties.Avatar,
+    quick_team: *const Properties.QuickTeam,
+) !ResolvedAvatarIds {
+    var ids: std.ArrayList(u32) = .empty;
+
+    if (fight_result) |result| {
+        try collectAvatarIdsFromFightResult(&ids, arena, &result);
+        if (ids.items.len > 0)
+            return .{ .ids = ids.items, .source = "fight_result" };
+    }
+
+    try collectAvatarIdsFromQuickTeam(&ids, arena, quick_team);
+    if (ids.items.len > 0)
+        return .{ .ids = ids.items, .source = "quick_team" };
+
+    try collectAvatarIdsFromEquippedRoster(&ids, arena, avatar_prop);
+    return .{
+        .ids = ids.items,
+        .source = if (ids.items.len > 0) "equipped_roster" else "none",
+    };
+}
+
 fn appendUnique(list: *std.ArrayList(u32), arena: Allocator, id: u32) !void {
     if (id == 0) return;
     for (list.items) |existing| if (existing == id) return;
@@ -100,25 +131,76 @@ fn collectFromAvatarRecords(
     }
 }
 
-fn collectAvatarIds(arena: Allocator, fight_result: *const pb.FightResult) ![]const u32 {
-    var ids: std.ArrayList(u32) = .empty;
-
+fn collectAvatarIdsFromFightResult(
+    list: *std.ArrayList(u32),
+    arena: Allocator,
+    fight_result: *const pb.FightResult,
+) !void {
     if (fight_result.battle_data_record) |record| {
         for (record.avatar_member_list.items) |member|
-            try appendUnique(&ids, arena, member.avatar_id);
+            try appendUnique(list, arena, member.avatar_id);
     }
 
     for (fight_result.NOKNHMFIACN.items) |member|
-        try appendUnique(&ids, arena, member.avatar_id);
+        try appendUnique(list, arena, member.avatar_id);
+
+    for (fight_result.JAOJPCNEJJN.items) |avatar_id|
+        try appendUnique(list, arena, avatar_id);
+
+    for (fight_result.LCFEMDLMBJK.items) |avatar_id|
+        try appendUnique(list, arena, avatar_id);
+
+    for (fight_result.OIPDEJGLKGC.items) |entry|
+        try appendUnique(list, arena, entry.key);
 
     if (fight_result.PLFBHFOCHOM) |detail| {
-        try collectFromAvatarRecords(&ids, arena, detail.avatar_list.items);
-        try collectFromAvatarRecords(&ids, arena, detail.MCLOEDEJGDD.items);
-        try collectFromAvatarRecords(&ids, arena, detail.BNMCPGLDACG.items);
-        try collectFromAvatarRecords(&ids, arena, detail.MNEOGNAKJJE.items);
+        try collectFromAvatarRecords(list, arena, detail.avatar_list.items);
+        try collectFromAvatarRecords(list, arena, detail.MCLOEDEJGDD.items);
+        try collectFromAvatarRecords(list, arena, detail.BNMCPGLDACG.items);
+        try collectFromAvatarRecords(list, arena, detail.MNEOGNAKJJE.items);
     }
+}
 
-    return ids.items;
+fn collectAvatarIdsFromQuickTeam(
+    list: *std.ArrayList(u32),
+    arena: Allocator,
+    quick_team: *const Properties.QuickTeam,
+) !void {
+    for (&quick_team.meta) |*team| {
+        var found_any = false;
+
+        for (team.avatar_ids) |optional_id| {
+            if (optional_id.unwrap()) |avatar_id| {
+                try appendUnique(list, arena, avatar_id);
+                found_any = true;
+            }
+        }
+
+        if (found_any) return;
+    }
+}
+
+fn collectAvatarIdsFromEquippedRoster(
+    list: *std.ArrayList(u32),
+    arena: Allocator,
+    avatar_prop: *const Properties.Avatar,
+) !void {
+    const avatar_count = avatar_prop.indexes.count();
+
+    for (avatar_prop.ids[0..avatar_count], 0..) |id, index| {
+        const has_weapon = avatar_prop.weapon_uids[index].unwrap() != null;
+        var has_equipment = false;
+
+        for (avatar_prop.equipment_uids[index]) |optional_uid| {
+            if (optional_uid.unwrap() != null) {
+                has_equipment = true;
+                break;
+            }
+        }
+
+        if (has_weapon or has_equipment)
+            try appendUnique(list, arena, @intFromEnum(id));
+    }
 }
 
 fn appendWeaponJson(
