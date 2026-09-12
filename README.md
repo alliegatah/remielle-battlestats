@@ -1,5 +1,4 @@
 # Remielle (Combat Analytics & Battle Stats Build)
-![segs](assets/segs.png)
 
 >**Combat Analytics Auto-Logger Included**  
 > This custom fork of **Remielle** automatically dumps binary combat log `.pb` files to `logs/endbattle_1.pb`, `logs/endbattle_1_loadout.json`, etc. whenever a battle run completes in-game. These `.pb` files can be uploaded directly to **[ZZZ Combat Analytics](https://zzzanalytics.vercel.app/)** to generate interactive DPS, Daze, Anomaly, and per-action combat breakdowns!
