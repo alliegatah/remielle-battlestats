@@ -78,8 +78,17 @@ pub const Skill = enum(u8) {
         pub fn maxFor(skill: Skill) Skill.Level {
             return @enumFromInt(@as(u8, switch (skill) {
                 .passive => 5,
-                else => 8,
+                else => 10,
             }));
+        }
+
+        pub fn forProgression(skill: Skill, rank: Rank, star: Star) Skill.Level {
+            const level = switch (skill) {
+                .passive => star.toInt(),
+                else => rank.toInt() + star.toInt() - 1,
+            };
+
+            return @enumFromInt(@as(u8, @intCast(level)));
         }
 
         pub fn toInt(level: Skill.Level) u32 {
