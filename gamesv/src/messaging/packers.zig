@@ -205,6 +205,7 @@ pub fn packDungeonPackageInfo(
         .avatar_list = avatar_list,
         .weapon_list = weapon_list,
         .equip_list = equip_list,
+        .buddy_list = buddy_list,
     };
 }
 

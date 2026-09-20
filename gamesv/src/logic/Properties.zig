@@ -101,7 +101,11 @@ fn unlockAllBuddies(props: *Properties.List, at: Player) void {
 
         inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
             const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
-            buddy.meta[i].skill_levels.set(skill, .maxFor(skill));
+            buddy.meta[i].skill_levels.set(skill, .forProgression(
+                skill,
+                buddy.meta[i].rank,
+                buddy.meta[i].star,
+            ));
         }
     };
 }
@@ -605,12 +609,13 @@ pub fn fromPlayerSave(
                 },
             };
 
-            inline for (std.meta.fields(Properties.Buddy.Skill), 0..) |field, skill_i| {
+            inline for (std.meta.fields(Properties.Buddy.Skill)) |field| {
                 const skill: Properties.Buddy.Skill = @enumFromInt(field.value);
-                buddy.meta[i].skill_levels.set(skill, if (item.skill_levels.items.len > skill_i)
-                    @enumFromInt(item.skill_levels.items[skill_i])
-                else
-                    .maxFor(skill));
+                buddy.meta[i].skill_levels.set(skill, .forProgression(
+                    skill,
+                    buddy.meta[i].rank,
+                    buddy.meta[i].star,
+                ));
             }
         }
     } else {
