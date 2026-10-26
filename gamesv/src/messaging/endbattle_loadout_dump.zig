@@ -7,6 +7,24 @@ const logic = @import("../logic.zig");
 const Properties = logic.Properties;
 const pb = @import("rmpb").main;
 
+/// The avatar ids of the completed battle, in the order the client reports them.
+///
+/// This is the authoritative source for the end-battle result screen: the client resolves
+/// portraits and levels from its own synced avatar roster, so only the ids and their order are
+/// transmitted. Callers that need a list even when the request carries no usable ids should use
+/// the fallbacks in `resolveAvatarIds` instead.
+pub fn battleAvatarIds(
+    arena: Allocator,
+    fight_result: ?pb.FightResult,
+) Allocator.Error![]const u32 {
+    var ids: std.ArrayList(u32) = .empty;
+
+    if (fight_result) |result|
+        try collectAvatarIdsFromFightResult(&ids, arena, &result);
+
+    return ids.items;
+}
+
 pub fn writeSidecar(
     io: Io,
     arena: Allocator,
@@ -98,13 +116,11 @@ fn resolveAvatarIds(
     avatar_prop: *const Properties.Avatar,
     quick_team: *const Properties.QuickTeam,
 ) !ResolvedAvatarIds {
-    var ids: std.ArrayList(u32) = .empty;
+    const from_fight_result = try battleAvatarIds(arena, fight_result);
+    if (from_fight_result.len > 0)
+        return .{ .ids = from_fight_result, .source = "fight_result" };
 
-    if (fight_result) |result| {
-        try collectAvatarIdsFromFightResult(&ids, arena, &result);
-        if (ids.items.len > 0)
-            return .{ .ids = ids.items, .source = "fight_result" };
-    }
+    var ids: std.ArrayList(u32) = .empty;
 
     try collectAvatarIdsFromQuickTeam(&ids, arena, quick_team);
     if (ids.items.len > 0)
