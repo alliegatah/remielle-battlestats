@@ -5,6 +5,7 @@ const Allocator = std.mem.Allocator;
 
 const logic = @import("../logic.zig");
 const Properties = logic.Properties;
+const templates = @import("../Assets.zig").templates;
 const pb = @import("rmpb").main;
 
 pub fn writeSidecar(
@@ -62,17 +63,20 @@ fn formatSidecar(
         try appendFmt(&buf, arena, "\n    {{\n      \"avatar_id\": {d}", .{avatar_id});
 
         const avatar_id_enum = std.enums.fromInt(Properties.Avatar.Id, avatar_id) orelse {
-            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
+            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"potential\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
             continue;
         };
 
         const avatar_index = avatar_prop.indexes.get(avatar_id_enum) orelse {
-            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
+            try buf.appendSlice(arena, ",\n      \"mindscape\": null,\n      \"potential\": null,\n      \"weapon\": null,\n      \"drive_discs\": []\n    }");
             continue;
         };
 
         try buf.appendSlice(arena, ",\n      ");
         try appendMindscapeJson(&buf, arena, &avatar_prop.meta[avatar_index]);
+
+        try buf.appendSlice(arena, ",\n      ");
+        try appendPotentialJson(&buf, arena, avatar_id, &avatar_prop.meta[avatar_index]);
 
         try buf.appendSlice(arena, ",\n      ");
         try appendWeaponJson(&buf, arena, avatar_prop, weapon_prop, avatar_index);
@@ -223,6 +227,36 @@ fn appendMindscapeJson(
     }
 
     try buf.appendSlice(arena, "] }");
+}
+
+/// The Agent's Awakened Potential: `level` from 0 (none, or switched off) to
+/// `max` (its AvatarSpecialAwakenTemplateTb rows, 6 today), counting its rows
+/// up to the one unlocked. null for an Agent with no Potential.
+fn appendPotentialJson(
+    buf: *std.ArrayList(u8),
+    arena: Allocator,
+    avatar_id: u32,
+    meta: *const Properties.Avatar.Meta,
+) !void {
+    const unlocked = meta.awakening.toInt();
+    var max: u32 = 0;
+    var level: u32 = 0;
+    for (templates.avatar_special_awaken.entries) |template| if (template.avatar_id == avatar_id) {
+        max += 1;
+        if (unlocked != 0 and template.id <= unlocked) level += 1;
+    };
+
+    if (max == 0) {
+        try buf.appendSlice(arena, "\"potential\": null");
+        return;
+    }
+
+    const enabled = meta.flags.awake_enabled;
+    try appendFmt(buf, arena, "\"potential\": {{ \"level\": {d}, \"max\": {d}, \"enabled\": {s} }}", .{
+        if (enabled) level else 0,
+        max,
+        if (enabled) "true" else "false",
+    });
 }
 
 fn appendWeaponJson(
