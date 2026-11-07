@@ -1,0 +1,77 @@
+name: Upstream sync
+
+# Ports new commits from upstream Remielle (0.1.x) onto this fork's 0.1.x,
+# builds and tests, then pushes. If it can't (conflict in fork code, build or
+# test failure) it pushes nothing and opens an issue. See UPDATING.md.
+
+on:
+  schedule:
+    - cron: "17 */2 * * *" # every 2 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+env:
+  ISSUE_TITLE: Upstream sync blocked
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0.1.x
+          fetch-depth: 0
+
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Port upstream commits, build, test
+        id: sync
+        env:
+          FAILURE_FILE: ${{ runner.temp }}/sync-failure.md
+        run: bash .github/scripts/upstream-sync.sh
+
+      - name: Push
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/0.1.x)" ]; then
+            git push origin HEAD:0.1.x
+          fi
+
+      - name: Close sync issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number -q '.[].number'); do
+            gh issue close "$n" --comment "Resolved: fork is synced with upstream as of $(git rev-parse --short HEAD)."
+          done
+
+      - name: Report blocked sync
+        if: failure() && steps.sync.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILURE_FILE: ${{ runner.temp }}/sync-failure.md
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -f "$FAILURE_FILE" ] || echo "Sync failed before writing a report." > "$FAILURE_FILE"
+          printf '\n[Workflow run](%s)\n' "$RUN_URL" >> "$FAILURE_FILE"
+          reason=$(head -n1 "$FAILURE_FILE")
+          n=$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number -q '.[0].number')
+          if [ -z "$n" ]; then
+            gh issue create --title "$ISSUE_TITLE" --body-file "$FAILURE_FILE"
+          elif ! gh issue view "$n" --comments --json body,comments -q '.body, .comments[].body' | grep -qF "$reason"; then
+            gh issue comment "$n" --body-file "$FAILURE_FILE"
+          fi

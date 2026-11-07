@@ -1,7 +1,15 @@
 # Updating to a new upstream client version
 
-This fork (Battle Stats) tracks upstream Remielle at
-`https://git.xeondev.com/remielle/remielle` (branch `0.1.x`). Upstream ships
+This fork (Battle Stats) tracks upstream Remielle's GitHub mirror at
+`https://github.com/thexeondev/remielle` (branch `0.1.x`). The mirror has the
+same history as `https://git.xeondev.com/remielle/remielle`, plus the
+`zzz-bot-remi` data-revision bumps, so use the mirror as the source.
+
+> **This is automated.** The `Upstream sync` GitHub Action applies new upstream
+> commits for you. See [Automatic sync](#automatic-sync). The manual procedure
+> below is what to do when the bot opens an "Upstream sync blocked" issue.
+
+Upstream ships
 each client version as a commit, often also published as a `.patch` file, such as
 `1913eba675.patch` = "Update all of the appropriate resources for CNBetaWin3.4.3".
 
@@ -32,7 +40,7 @@ Run these from the repo root in Git Bash, or adapt them to PowerShell.
 ### 1. One-time setup: add upstream as a remote
 
 ```bash
-git remote add upstream https://git.xeondev.com/remielle/remielle.git
+git remote add upstream https://github.com/thexeondev/remielle.git
 ```
 
 ### 2. Fetch and find what's missing
@@ -42,15 +50,16 @@ git fetch upstream 0.1.x
 git log --oneline --reverse <LAST_SYNCED>..upstream/0.1.x
 ```
 
-`<LAST_SYNCED>` is the last upstream commit already ported. Commit messages
-record it with an `Upstream:` trailer (see step 6), so you can look it up with:
+`<LAST_SYNCED>` is the last upstream commit already ported. It's stored in
+`.github/upstream-sync.sha`:
 
 ```bash
-git log -1 --format=%B --grep='^Upstream:' | grep '^Upstream:'
+git log --oneline --reverse $(cat .github/upstream-sync.sha)..upstream/0.1.x
 ```
 
-If no commit has the trailer, compare subjects from `git log --oneline -30 upstream/0.1.x` and `git log --oneline -30`.
-For 3.4.3, `<LAST_SYNCED>` was `2f528f6`.
+Commits made by the bot also carry an `Upstream: <sha>` trailer.
+
+For the 3.4.3 sync, `<LAST_SYNCED>` was `2f528f6`.
 
 ### 3. Apply each missing commit, oldest first, without committing
 
@@ -108,21 +117,68 @@ finish one battle. Check that `logs/endbattle_N.pb` and
 
 ### 6. Commit
 
-Use the fork's convention, and record the upstream commit you synced to:
+Record the last upstream commit you ported in the state file, so the bot
+continues from there, then commit:
 
 ```bash
-git commit -m "Update to v3.4.3" -m "Synced upstream a7352ff, 7491865, 1913eba, plus the WeaponTemplateTb fix from 237cf3f." -m "Upstream: 1913eba67589a34b6d495fce39acf79552b6b238"
+echo <LAST_PORTED_FULL_SHA> > .github/upstream-sync.sha
+git add .github/upstream-sync.sha
+git commit -m "Update to v3.4.3" -m "Synced upstream a7352ff, 7491865, 1913eba." -m "Upstream: 1913eba67589a34b6d495fce39acf79552b6b238"
+git push origin 0.1.x
 ```
+
+If the bot had opened an "Upstream sync blocked" issue, its next run closes the
+issue automatically. You can also trigger a run right away from
+**Actions → Upstream sync → Run workflow**.
 
 ---
 
 ## Data-revision-only bumps (no new client version)
 
 Sometimes the client gets a new data revision with no version change, e.g. `Update to Rev. 20052336`.
-Upstream publishes these as `Assets: bump data revision to N`. Port them with
-the same `git cherry-pick -n` flow so the `.remi` binary stays in step with
-`dpsv/config.zon`. If you only edit `dpsv/config.zon` by hand, the next upstream
-patch won't apply cleanly.
+Upstream publishes these as `Assets: bump data revision to N`; the
+`zzz-bot-remi` ones appear only on the GitHub mirror. The bot ports them
+automatically. Don't edit `dpsv/config.zon` revisions by hand. That puts the fork
+out of step with upstream, and the next upstream commit then conflicts.
+
+---
+
+## Automatic sync
+
+`.github/workflows/upstream-sync.yml` runs every 2 hours, and on demand from
+**Actions → Upstream sync → Run workflow**. It runs
+`.github/scripts/upstream-sync.sh`, which:
+
+1. Fetches `thexeondev/remielle` `0.1.x` and lists the commits after the one in
+   `.github/upstream-sync.sha`.
+2. Cherry-picks each one, oldest first, as **one fork commit per upstream
+   commit**. Each commit keeps the upstream author and message and gets an
+   `Upstream: <sha>` trailer. The state file advances in the same commit.
+3. Resolves conflicts with the table in [step 4](#4-resolve-conflicts):
+   upstream wins for `assets/`, `rmpb/`, `dpsv/config.zon` and
+   `gamesv/config.zon`, and for `README.md` the fork keeps its own text except the
+   supported-version line. A conflict anywhere else (fork code) stops the sync.
+4. Runs `zig build` and `zig build test` on Linux.
+5. On success, pushes to `0.1.x` and closes any open "Upstream sync blocked"
+   issue.
+
+If any step fails, **nothing is pushed**. The bot opens one "Upstream sync blocked"
+issue (or comments on the existing one if the reason changed) naming the upstream
+commit and files involved. Fix it by following the manual procedure above. The
+next run continues from the state file.
+
+Run the script locally the same way (it commits but never pushes):
+
+```bash
+bash .github/scripts/upstream-sync.sh            # full: sync + build + test
+SKIP_BUILD=1 bash .github/scripts/upstream-sync.sh
+```
+
+What the bot can't check: that the server works with the real client. Do a
+quick in-game battle after a client version update.
+
+GitHub disables scheduled workflows in a repo after 60 days with no activity.
+If upstream is quiet for that long, re-enable the workflow under **Actions**.
 
 ---
 
