@@ -40022,3 +40022,24 @@ pub const ModMainCityTimeScRsp = struct {
     pub const pb_desc_name = "ModMainCityTimeScRsp";
     retcode: i32 = 0,
 };
+
+/// One entry of `IEKEBLNBCPN.JBCOFFADDGJ`.
+///
+/// Carries nothing but the battle avatar and its thumbs-up score: the client resolves portraits
+/// and levels from its own synced avatar roster.
+pub const PJKDEPHMICK = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "PJKDEPHMICK";
+    avatar_id: u32 = 0,
+    /// Displayed contribution (thumbs-up) score, computed by `gamesv/src/messaging/result_scores.zig`
+    /// with the official server's formula.
+    JCCBJCMEKJI: u32 = 0,
+};
+
+/// Dungeon / battle completion notification (cmd_id 3486) for Hadal and Deadly Assault.
+pub const IEKEBLNBCPN = struct {
+    pub const init: @This() = .{};
+    pub const pb_desc_name = "IEKEBLNBCPN";
+    /// One contribution record per battle avatar, in the extracted/displayed team order.
+    JBCOFFADDGJ: std.ArrayList(PJKDEPHMICK) = .empty,
+};

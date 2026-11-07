@@ -185,6 +185,14 @@ pub fn process(
                     // Success, run the pipeline
                     try logic.mutators.dispatchLogicChanges(frame, &changes);
                     try messaging.notifiers.notifyLogicChanges(arena, frame, &changes);
+
+                    // The client already has the battle roster synced, so the completion
+                    // notification carries only the battle's avatar ids plus the thumbs-up scores,
+                    // computed from the request's battle statistics. It is sent ahead of the
+                    // EndBattle response so the contributions are on screen by the time the result
+                    // lands.
+                    if (InMessage.Data == rmpb.main.EndBattleCsReq)
+                        try sendHadalCompletionNotify(arena, frame, &data, decrypted_body);
                 } else |err| switch (@as(HandlerError, err)) {
                     error.IllegalMessage => {
                         // Send the response but don't run the pipeline
@@ -236,6 +244,50 @@ pub fn process(
             }
         } else comptime unreachable,
     }
+}
+
+/// Notifies the client that the Hadal / Deadly Assault battle finished, carrying one contribution
+/// record per battle avatar in the order the client reported them.
+///
+/// The contribution value is the thumbs-up display score, which the client both displays and uses
+/// to pick the MVP. It is computed from the request's battle statistics the way the official server
+/// does (`result_scores.zig`); an entry in `manual-result-scores.txt` overrides it per avatar or slot.
+///
+/// Portraits and levels are *not* part of the record: the client resolves them from its own
+/// synced avatar roster using the transmitted ids.
+fn sendHadalCompletionNotify(
+    arena: Allocator,
+    frame: *const Server.Frame,
+    message: *const rmpb.main.EndBattleCsReq,
+    request_body: []const u8,
+) messaging.SendError!void {
+    const team = endbattle_loadout_dump.battleAvatarIds(arena, message.fight_result) catch
+        return; // OutOfMemory: the notification is skipped, the battle result still goes out.
+
+    if (team.len == 0) return;
+
+    const computed = result_scores.compute(arena, request_body, team) catch return;
+
+    // Re-read on every battle so edits apply to subsequent results without a restart.
+    const overrides = manual_result_scores.load(arena, frame.io);
+
+    var contributions: std.ArrayList(rmpb.main.PJKDEPHMICK) = .empty;
+    contributions.ensureTotalCapacity(arena, team.len) catch return;
+
+    for (team, computed) |avatar_id, score| contributions.appendAssumeCapacity(.{
+        .avatar_id = avatar_id,
+        .JCCBJCMEKJI = manual_result_scores.findForBattleAvatar(&overrides, team, avatar_id) orelse score,
+    });
+
+    const notify: rmpb.main.IEKEBLNBCPN = .{ .JBCOFFADDGJ = contributions };
+
+    try messaging.send(
+        frame.multi_conversation,
+        frame.clients,
+        frame.target_index,
+        .notify,
+        notify,
+    );
 }
 
 pub fn Message(Msg: type) type {
@@ -317,6 +369,8 @@ const logic = @import("../logic.zig");
 const Assets = @import("../Assets.zig");
 const messaging = @import("../messaging.zig");
 const endbattle_loadout_dump = @import("endbattle_loadout_dump.zig");
+const manual_result_scores = @import("manual_result_scores.zig");
+const result_scores = @import("result_scores.zig");
 
 const rmio = @import("rmio");
 const rmpb = @import("rmpb");

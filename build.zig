@@ -210,6 +210,36 @@ pub fn build(b: *Build) void {
     });
 
     tests.dependOn(&b.addRunArtifact(rmio_tests).step);
+
+    const hadal_notify_test = b.addTest(.{
+        .name = "hadal-notify",
+        .root_module = hadal_notify_test_module(b, target, optimize),
+    });
+
+    tests.dependOn(&b.addRunArtifact(hadal_notify_test).step);
+}
+
+/// The end-battle completion notification (`IEKEBLNBCPN`) and its thumbs-up scores are covered
+/// together: the scores are computed from the battle statistics (`result_scores.zig`), with
+/// optional per-avatar overrides from `manual-result-scores.txt`.
+fn hadal_notify_test_module(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Module {
+    const module = b.createModule(.{
+        .root_source_file = b.path("gamesv/src/hadal_notify_test.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    module.addImport("rmpb", b.createModule(.{
+        .root_source_file = b.path("rmpb/src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    }));
+
+    return module;
 }
 
 const gamesv_assets: []const StaticAsset = &.{
