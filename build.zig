@@ -215,6 +215,9 @@ pub fn build(b: *Build) void {
 const gamesv_assets: []const StaticAsset = &.{
     .asset("config", "gamesv/config.zon"),
     .asset("initial_xorpad", "gamesv/initial_xorpad.bytes"),
+    // Battle Stats: the dispatch config names the client data revision, which the
+    // loadout sidecar records so the site can tell beta builds apart.
+    .asset("dpsv_config", "dpsv/config.zon"),
 
     // Filecfg
     .asset("AvatarBaseTemplateTb", "assets/filecfg/AvatarBaseTemplateTb.zon"),
