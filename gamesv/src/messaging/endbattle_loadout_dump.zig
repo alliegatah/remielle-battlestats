@@ -8,6 +8,18 @@ const Properties = logic.Properties;
 const templates = @import("../Assets.zig").templates;
 const pb = @import("rmpb").main;
 
+// The client build this server serves, read from the dispatch config at compile
+// time: the last `versions` entry and its design data / resource revisions. The
+// site stores the data revision on the run and shows admins "Rev. <n>".
+const dpsv_config = @import("dpsv_config");
+const client_version = blk: {
+    const fields = @typeInfo(@TypeOf(dpsv_config.versions)).@"struct".fields;
+    break :blk fields[fields.len - 1].name;
+};
+const cdn_conf = @field(dpsv_config.versions, client_version).cdn_conf;
+const data_revision: []const u8 = cdn_conf.design_data.data_revision;
+const res_revision: []const u8 = cdn_conf.game_res.res_revision;
+
 pub fn writeSidecar(
     io: Io,
     arena: Allocator,
@@ -52,8 +64,11 @@ fn formatSidecar(
 
     const resolved = try resolveAvatarIds(arena, message.fight_result, avatar_prop, quick_team);
 
-    try appendFmt(&buf, arena, "{{\n  \"seq\": {d},\n  \"avatar_id_source\": \"{s}\",\n  \"avatars\": [", .{
+    try appendFmt(&buf, arena, "{{\n  \"seq\": {d},\n  \"client_version\": \"{s}\",\n  \"data_revision\": \"{s}\",\n  \"res_revision\": \"{s}\",\n  \"avatar_id_source\": \"{s}\",\n  \"avatars\": [", .{
         seq,
+        client_version,
+        data_revision,
+        res_revision,
         resolved.source,
     });
 
