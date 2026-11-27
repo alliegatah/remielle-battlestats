@@ -28638,11 +28638,11 @@ pub const NEJFNEFHFOB = struct {
     pub const pb_desc_name = "NEJFNEFHFOB";
 };
 
-pub const OLNOPCJAEDF = struct {
+pub const AddBuddyScNotify = struct {
     pub const init: @This() = .{};
-    pub const pb_desc_name = "OLNOPCJAEDF";
+    pub const pb_desc_name = "AddBuddyScNotify";
     lock: bool = false,
-    UNK_OLNOPCJAEDF_32: std.ArrayList(GAEOLHHGGAH) = .empty,
+    UNK_AddBuddyScNotify_32: std.ArrayList(GAEOLHHGGAH) = .empty,
     buddy_id: u32 = 0,
 };
 
@@ -28953,6 +28953,7 @@ pub const VideoGetInfoScRsp = struct {
     pub const pb_desc_name = "VideoGetInfoScRsp";
     retcode: i32 = 0,
     video_key_map: std.ArrayList(MapEntry(u32, u64)) = .empty,
+    video_key_v2_map: std.ArrayList(MapEntry(u32, []const u8)) = .empty,
 };
 
 pub const KAOMJBGPGNI = struct {
